@@ -14,10 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum GlobalRole {
-  ADMIN
-  USER
-}
 
 model User {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
@@ -25,11 +21,11 @@ model User {
   password        String          // hashed
   name            String
   avatarUrl       String
-  projects        ProjectMember[] // list all the projects the user is contributing to 
-  createdTask     Task[]          @relation("Reporter")
-  assignedTasks   Task[]          @relation("Assignee")
+  memberships     ProjectMember[]
+  createdTasks    Task[]         @relation("Reporter")
+  assignedTasks   Task[]         @relation("Assignee")
   comments        Comment[]
-  notification    Notification[]
+  notifications   Notification[]
   cretedAt        DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -93,24 +89,24 @@ enum Priority {
 }
 
 model Task {
-  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
   title         String 
   description   String 
   type          TaskType 
-  status        String    // Linked to Column name [cite: 127]
-  priority      Priority  @default(MEDIUM) [cite: 128]
+  status        String         // Linked to Column name
+  priority      Priority        @default(MEDIUM) 
   dueDate       DateTime? 
 
-  // Parent-Child Hierarchy [cite: 122]
+  // Parent-Child Hierarchy 
   parentStoryId String?   @db.ObjectId
   parentStory   Task?     @relation("StoryChildren", fields: [parentStoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subTasks      Task[]    @relation("StoryChildren")
 
-  // Audit Trail (Requirement 2.3.5) [cite: 141]
+  // Audit Trail 
   // Stores history like: { event: "STATUS_CHANGE", old: "To Do", new: "In Progress", time: Date }
-  history       Json[] [cite: 150]
+  history       Json[]
 
-  // Timestamps [cite: 151, 152, 153]
+  // Timestamps 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   resolvedAt    DateTime?
@@ -119,12 +115,29 @@ model Task {
   // Relations
   boardId       String    @db.ObjectId
   board         Board     @relation(fields: [boardId], references: [id])
-  
   reporterId    String    @db.ObjectId
   reporter      User      @relation("Reporter", fields: [reporterId], references: [id])
-  
   assigneeId    String?   @db.ObjectId
   assignee      User?     @relation("Assignee", fields: [assigneeId], references: [id])
-  
   comments      Comment[]
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  taskId    String   @db.ObjectId
+  task      Task     @relation(fields: [taskId], references: [id])
+  authorId  String   @db.ObjectId
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  message   String
+  isRead    Boolean  @default(false)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
