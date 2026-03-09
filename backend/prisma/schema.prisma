@@ -20,19 +20,18 @@ enum GlobalRole {
 }
 
 model User {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  email           String   @unique
-  password        String   // hashed
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  email           String          @unique
+  password        String          // hashed
   name            String
   avatarUrl       String
-  role            String   @default("USER") // This handles Global Admin vs User
-  projects        ProjectMember[]  // list all the projects the user is contributing to 
-  createdTask     Task[]   @relation("Reporter")
-  assignedTasks   Task[]   @relation("Assignee")
+  projects        ProjectMember[] // list all the projects the user is contributing to 
+  createdTask     Task[]          @relation("Reporter")
+  assignedTasks   Task[]          @relation("Assignee")
   comments        Comment[]
   notification    Notification[]
-  cretedAt        DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  cretedAt        DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 enum ProjectRole {
@@ -42,10 +41,10 @@ enum ProjectRole {
 }
 
 model project {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
   name         String    
   description  String    
-  isArchived   Boolean   @default(false)
+  isArchived   Boolean         @default(false)
   members      ProjectMember[]
   boards       Boards[]
   createdAt    DateTime        @default(now())
@@ -53,19 +52,79 @@ model project {
 }
 
 model ProjectMember {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
   role      ProjectRole 
-  
-  userId    String      @db.ObjectId
-  user      User        @relation(fields: [userId], references: [id])
-  
-  projectId String      @db.ObjectId
-  project   Project     @relation(fields: [projectId], references: [id])
-
+  userId    String             @db.ObjectId
+  user      User               @relation(fields: [userId], references: [id])
+  projectId String             @db.ObjectId
+  project   Project            @relation(fields: [projectId], references: [id])
   @@unique([userId, projectId]) // A user has only one role per project
 }
 
+model Board {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  projectId String             @db.ObjectId
+  project   Project            @relation(fields: [projectId], references: [id])
+  columns   Column[]
+  tasks     Task[]
+}
 
-model ProjectMember {
-   
+model Column {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  name      String             // e.g., "To Do", "In Progress" [cite: 106]
+  order     Int                // For reordering columns [cite: 111]
+  wipLimit  Int?               // Mandatory: Must block invalid moves if full 
+  boardId   String             @db.ObjectId
+  board     Board              @relation(fields: [boardId], references: [id])
+}
+
+enum TaskType {
+  STORY
+  TASK
+  BUG
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Task {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  title         String 
+  description   String 
+  type          TaskType 
+  status        String    // Linked to Column name [cite: 127]
+  priority      Priority  @default(MEDIUM) [cite: 128]
+  dueDate       DateTime? 
+
+  // Parent-Child Hierarchy [cite: 122]
+  parentStoryId String?   @db.ObjectId
+  parentStory   Task?     @relation("StoryChildren", fields: [parentStoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subTasks      Task[]    @relation("StoryChildren")
+
+  // Audit Trail (Requirement 2.3.5) [cite: 141]
+  // Stores history like: { event: "STATUS_CHANGE", old: "To Do", new: "In Progress", time: Date }
+  history       Json[] [cite: 150]
+
+  // Timestamps [cite: 151, 152, 153]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+
+  // Relations
+  boardId       String    @db.ObjectId
+  board         Board     @relation(fields: [boardId], references: [id])
+  
+  reporterId    String    @db.ObjectId
+  reporter      User      @relation("Reporter", fields: [reporterId], references: [id])
+  
+  assigneeId    String?   @db.ObjectId
+  assignee      User?     @relation("Assignee", fields: [assigneeId], references: [id])
+  
+  comments      Comment[]
 }
