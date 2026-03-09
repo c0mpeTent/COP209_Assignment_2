@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")
+  // Remove the url line from here
 }
 
 
@@ -36,13 +36,13 @@ enum ProjectRole {
   PROJECT_VIEWER
 }
 
-model project {
+model Project {
   id           String          @id @default(auto()) @map("_id") @db.ObjectId
   name         String    
   description  String    
   isArchived   Boolean         @default(false)
   members      ProjectMember[]
-  boards       Boards[]
+  boards       Board[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 }
