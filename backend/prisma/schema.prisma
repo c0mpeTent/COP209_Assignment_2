@@ -14,14 +14,58 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model User {
-  id         string   @id @default(auto()) @map("_id") @db.ObjectId
-  email      string   @unique
-  password   string
-  name       string
-  avatarUrl  string
-  role       string   @default("USER") // This handles Global Admin vs User
+enum GlobalRole {
+  ADMIN
+  USER
 }
 
-model 
+model User {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  email           String   @unique
+  password        String   // hashed
+  name            String
+  avatarUrl       String
+  role            String   @default("USER") // This handles Global Admin vs User
+  projects        ProjectMember[]  // list all the projects the user is contributing to 
+  createdTask     Task[]   @relation("Reporter")
+  assignedTasks   Task[]   @relation("Assignee")
+  comments        Comment[]
+  notification    Notification[]
+  cretedAt        DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum ProjectRole {
+  PROJECT_ADMIN
+  PROJECT_MEMBER
+  PROJECT_VIEWER
+}
+
+model project {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String    
+  description  String    
+  isArchived   Boolean   @default(false)
+  members      ProjectMember[]
+  boards       Boards[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model ProjectMember {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  role      ProjectRole 
+  
+  userId    String      @db.ObjectId
+  user      User        @relation(fields: [userId], references: [id])
+  
+  projectId String      @db.ObjectId
+  project   Project     @relation(fields: [projectId], references: [id])
+
+  @@unique([userId, projectId]) // A user has only one role per project
+}
+
+
+model ProjectMember {
+   
+}
