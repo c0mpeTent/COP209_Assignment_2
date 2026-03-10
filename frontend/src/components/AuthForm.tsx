@@ -13,18 +13,20 @@ const AuthForm: React.FC = () => {
     e.preventDefault();
     const mode = isLogin ? "login" : "singup";
     console.log("summited " + email + " " + password + " in mode : " + mode);
-    // Determine the correct endpoint
+    // 1. Determine the correct endpoint
+    const backendUrl = import.meta.env.VITE_BACKEND_ORIGIN;
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     const payload = isLogin
       ? { email, password }
       : { email, password, name, avatarUrl: "" }; // Matches your User model
 
     try {
-      //  Make the API Request
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      // 2. Make the API Request
+      const response = await fetch(`${backendUrl}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        credentials: "include", // Include cookies for session management
       });
 
       const data = await response.json();
@@ -60,17 +62,6 @@ const AuthForm: React.FC = () => {
       <br></br>
       <form onSubmit={OnSubmit}>
         <div>
-          <h3> Email </h3>
-          <input
-            className={styles.input_field}
-            type="email"
-            id="email"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            required
-          />
-        </div>
-        <div>
           <h3> User name </h3>
           <input
             className={styles.input_field}
@@ -78,6 +69,17 @@ const AuthForm: React.FC = () => {
             id="user_name"
             value={user_name}
             onChange={(ev) => setUser_name(ev.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <h3> Email </h3>
+          <input
+            className={styles.input_field}
+            type="email"
+            id="email"
+            value={email}
+            onChange={(ev) => setEmail(ev.target.value)}
             required
           />
         </div>
