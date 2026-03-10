@@ -1,2 +1,15 @@
 "http://localhost:5000/api/auth/me
 Backend code for the GET /api/auth/me route
+profile.tsx <button className={styles.editBtn}>Edit Profile</button>
+<button className={styles.createBtn} onClick={() => alert("Open Modal")}>
+            + New Project
+          </button>
+
+change role of a user 
+add user to a project 
+delete user to a project 
+add workflow/board to a project
+add and delete task from khanban board 
+drag and drop task between columns
+add delete and reorder columns 
+Backend "Me" route 🚀

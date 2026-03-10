@@ -53,11 +53,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className={styles.profileContainer}>
-      <nav className={styles.navbar}>
-        <button onClick={() => navigate("/dashboard")} className={styles.backBtn}>
-          ← Back to Dashboard
-        </button>
-      </nav>
 
       <main className={styles.card}>
         <div className={styles.avatarSection}>
@@ -76,9 +71,6 @@ const Profile: React.FC = () => {
 
         <div className={styles.actionSection}>
           <button className={styles.editBtn}>Edit Profile</button>
-          <button onClick={handleLogout} className={styles.logoutBtn}>
-            Log Out
-          </button>
         </div>
       </main>
     </div>

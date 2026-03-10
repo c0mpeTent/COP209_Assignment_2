@@ -20,7 +20,7 @@
 
 .logoutBtn {
   background: transparent;
-  border: 1px solid #bb86fc;
+  border: 1px solid #8631ee;
   color: #bb86fc;
   padding: 5px 15px;
   cursor: pointer;
@@ -121,4 +121,84 @@
   border-radius: 6px;
   cursor: pointer;
   width: 100%;
+}
+
+.dashboardContent {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* Aligns button with the bottom of the title text */
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.titleSection .title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.titleSection .subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.createBtn {
+  background-color: #bb86fc;
+  color: #121212;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
+}
+
+.createBtn:hover {
+  background-color: #d7b7fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(187, 134, 252, 0.3);
+}
+
+.createBtn:active {
+  transform: translateY(0);
+}
+
+.plusIcon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.listSection {
+  margin-top: 1rem;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .createBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }

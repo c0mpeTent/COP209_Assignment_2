@@ -46,35 +46,37 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth");
-  };
-
   if (loading) return <div className={styles.loading}>Loading Workspace...</div>;
 
   return (
-    <div className={styles.dashboardContainer}>
-      <nav className={styles.navbar}>
-        <h2>Project<span style={{ color: "#bb86fc" }}>Pro</span></h2>
+    /* We remove the Container and Nav because Layout.tsx handles them now */
+    <div className={styles.dashboardContent}>
+      <nav>
         <div className={styles.navActions}>
           <span>Hi, {userName}</span>
-          <button onClick={handleLogout} className={styles.logoutBtn}>Logout</button>
         </div>
       </nav>
-
-      <main className={styles.content}>
-        <header className={styles.header}>
-          <h1>Dashboard</h1>
-          {/* Create Button stays here as the "Primary Action" */}
-          <button className={styles.createBtn} onClick={() => alert("Open Modal")}>
-            + New Project
-          </button>
-        </header>
-
-        {/* Pass the projects array into our new component via 'props' */}
+      
+      <header className={styles.header}>
+        <div className={styles.titleSection}>
+          <h1 className={styles.title}>Your Projects</h1>
+          <p className={styles.subtitle}>Manage and track your active boards</p>
+        </div>
+  
+        {/* This button is the "Primary Action" for this specific page */}
+        <button 
+          className={styles.createBtn} 
+          onClick={() => alert("Open Modal")}
+        >
+          <span className={styles.plusIcon}>+</span> New Project
+        </button>
+      </header>
+  
+      {/* The grid of projects */}
+      <div className={styles.listSection}>
         <ProjectList items={projects} />
-      </main>
+      </div>
+  
     </div>
   );
 };
