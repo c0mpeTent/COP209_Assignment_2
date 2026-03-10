@@ -13,14 +13,14 @@ const AuthForm: React.FC = () => {
     e.preventDefault();
     const mode = isLogin ? "login" : "singup";
     console.log("summited " + email + " " + password + " in mode : " + mode);
-    // 1. Determine the correct endpoint
+    // Determine the correct endpoint
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     const payload = isLogin
       ? { email, password }
       : { email, password, name, avatarUrl: "" }; // Matches your User model
 
     try {
-      // 2. Make the API Request
+      //  Make the API Request
       const response = await fetch(`http://localhost:5000${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
