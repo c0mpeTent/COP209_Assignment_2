@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import prisma from "../lib/prisma.js"; // .js extension not .ts
+import prisma from "../lib/prisma.js";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -24,18 +24,22 @@ export const register = async (req: Request, res: Response) => {
         name,
         password: hashedPassword,
         avatarUrl: `https://ui-avatars.com/api/?name=${name}`,
-        globalRole: "USER",
       },
     });
 
     // generate Token
     const token = jwt.sign(
-      { userId: user.id, role: user.globalRole },
+      { userId: user.id },
       process.env.JWT_SECRET || "fallback_secret",
       { expiresIn: "7d" }
     );
 
-    res.status(201).json({ token, user: { id: user.id, name, email } });
+    res.cookie("token", token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    res.status(201).json({ message: "User registered successfully", user: { id: user.id, name, email } });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error", error });
   }
@@ -57,7 +61,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       // generate JWT Token
-      { userId: user.id, role: user.globalRole },
+      { userId: user.id},
       process.env.JWT_SECRET || "fallback_secret",
       { expiresIn: "7d" }
     );
