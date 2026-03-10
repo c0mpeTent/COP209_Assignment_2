@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { GlobalRole } from "../client/index.js";
+import { GlobalRole } from "@prisma/client";
 
 // defined secret
 const secret = process.env.JWT_SECRET || "your_fallback_secret_key";
