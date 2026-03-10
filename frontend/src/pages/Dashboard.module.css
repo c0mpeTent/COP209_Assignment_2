@@ -1,0 +1,124 @@
+.dashboardContainer {
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+.logo {
+  margin: 0;
+  font-weight: 700;
+}
+
+.logoutBtn {
+  background: transparent;
+  border: 1px solid #bb86fc;
+  color: #bb86fc;
+  padding: 5px 15px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.logoutBtn:hover {
+  background: #bb86fc;
+  color: #121212;
+}
+
+.content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.createBtn {
+  background-color: #bb86fc;
+  color: #121212;
+  border: none;
+  padding: 12px 24px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.emptyState {
+  border: 2px dashed #333;
+  padding: 40px;
+  text-align: center;
+  margin-top: 20px;
+  color: #888;
+}
+
+/* Dashboard.module.css */
+.loadingScreen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #121212;
+  color: #bb86fc;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(187, 134, 252, 0.1);
+  border-left-color: #bb86fc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.projectCard {
+  background-color: #1e1e1e;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.projectCard:hover {
+  transform: translateY(-5px);
+  border-color: #bb86fc;
+}
+
+.cardDesc {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.viewBtn {
+  background: transparent;
+  color: #bb86fc;
+  border: 1px solid #bb86fc;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import styles from "./AuthForm.module.css";
+import { useNavigate } from "react-router-dom";
 
 const AuthForm: React.FC = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +39,12 @@ const AuthForm: React.FC = () => {
       if (isLogin) {
         // Store the JWT token in LocalStorage so the "Security Guard" can see it later
         localStorage.setItem("token", data.token);
-        alert("Login Successful!");
+
         // navigate("/dashboard");
+        navigate("/dashboard");
+        window.location.reload();
+
+        alert("Login Successful!");
       } else {
         alert("Registration Successful! Please login.");
         setIsLogin(true);
