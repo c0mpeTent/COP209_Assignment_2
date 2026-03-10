@@ -1,3 +1,39 @@
+// {
+//   "compilerOptions": {
+//     /* File Layout */
+//     "rootDir": "./src",
+//     "outDir": "./dist",
+
+//     /* Environment Settings */
+//     "module": "NodeNext",
+//     "moduleResolution": "NodeNext", // <--- ADD THIS: This is the "secret sauce"
+//     "target": "ESNext",
+//     "lib": ["ESNext"],
+//     "types": ["node"],
+
+//     /* Other Outputs */
+//     "sourceMap": true,
+//     "declaration": true,
+//     "declarationMap": true,
+
+//     /* Stricter Typechecking Options */
+//     "strict": true,
+//     "noUncheckedIndexedAccess": true,
+//     "exactOptionalPropertyTypes": true,
+
+//     /* Style Options */
+//     "verbatimModuleSyntax": true,
+//     "isolatedModules": true,
+//     "noUncheckedSideEffectImports": true,
+//     "moduleDetection": "force",
+//     "skipLibCheck": true,
+//     "esModuleInterop": true,
+//     "jsx": "react-jsx"
+//   },
+//   "include": ["src/**/*"],
+//   "exclude": ["node_modules"]
+// }
+
 {
   "compilerOptions": {
     /* File Layout */
@@ -6,7 +42,7 @@
 
     /* Environment Settings */
     "module": "NodeNext",
-    "moduleResolution": "NodeNext", // <--- ADD THIS: This is the "secret sauce"
+    "moduleResolution": "NodeNext",
     "target": "ESNext",
     "lib": ["ESNext"],
     "types": ["node"],
@@ -29,10 +65,10 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+
+    /* Path Resolving (Fixes the .ts import issues) */
+    "allowImportingTsExtensions": false, // Keep this false for NodeNext compatibility
+    "noEmit": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

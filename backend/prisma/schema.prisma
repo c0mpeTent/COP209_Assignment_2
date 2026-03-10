@@ -5,15 +5,18 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mongodb"
-  // Remove the url line from here
+  url      = env("DATABASE_URL")
 }
 
+enum GlobalRole {
+  ADMIN
+  USER
+}
 
 model User {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
@@ -21,6 +24,7 @@ model User {
   password        String          // hashed
   name            String
   avatarUrl       String
+  globalRole      GlobalRole @default(USER) // Rename 'role' to 'globalRole'  
   memberships     ProjectMember[]
   createdTasks    Task[]         @relation("Reporter")
   assignedTasks   Task[]         @relation("Assignee")
