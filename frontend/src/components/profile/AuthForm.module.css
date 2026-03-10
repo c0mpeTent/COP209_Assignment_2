@@ -1,0 +1,8 @@
+.input_field{
+    width : 25vw ;
+    height : 20px ;
+}
+.container{
+    display:flex;
+    flex-direction: column;
+}
