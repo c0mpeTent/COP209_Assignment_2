@@ -40,3 +40,27 @@
 .read-the-docs {
   color: #888;
 }
+
+/* src/App.css */
+:root {
+  --bg-dark: #121212;
+  --text-main: #e0e0e0;
+  --accent-purple: #bb86fc;
+}
+
+body,
+#root,
+.app {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+.app-component {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

@@ -1,0 +1,99 @@
+.sidebar {
+  width: 260px;
+  background-color: #1a1a1a; /* Slightly lighter than the #121212 main bg */
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 24px 16px;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.logoSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 40px 12px;
+}
+
+.logoIcon {
+  background-color: #bb86fc;
+  color: #121212;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.logoText {
+  margin: 0;
+  font-size: 1.4rem;
+  letter-spacing: -0.5px;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.navItem {
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: 12px 16px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+}
+
+.active {
+  background-color: rgba(187, 134, 252, 0.1) !important;
+  color: #bb86fc !important;
+}
+
+.icon {
+  margin-right: 12px;
+  font-size: 1.2rem;
+}
+
+.footer {
+  padding-top: 20px;
+  border-top: 1px solid #333;
+}
+
+.logoutBtn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #333;
+  color: #ff5555;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+  background-color: rgba(255, 85, 85, 0.1);
+  border-color: #ff5555;
+}

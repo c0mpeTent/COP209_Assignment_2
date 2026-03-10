@@ -1,0 +1,50 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: #bb86fc;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.tag {
+  font-size: 0.7rem;
+  background: rgba(187, 134, 252, 0.1);
+  color: #bb86fc;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.desc {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+  line-height: 1.4;
+}
+
+.viewBtn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #444;
+  color: #e0e0e0;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viewBtn:hover {
+  border-color: #bb86fc;
+  color: #bb86fc;
+}
