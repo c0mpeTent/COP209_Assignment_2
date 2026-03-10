@@ -1,4 +1,4 @@
-import { PrismaClient } from "../client.js";
+import { PrismaClient } from "@prisma/client";
 
 // This creates the connection to your MongoDB
 const prisma = new PrismaClient();

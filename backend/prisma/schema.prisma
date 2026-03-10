@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/client" // This will create a physical folder
 }
 
 datasource db {
@@ -43,7 +44,8 @@ enum ProjectRole {
 model Project {
   id           String          @id @default(auto()) @map("_id") @db.ObjectId
   name         String    
-  description  String    
+  description  String?
+  ownerId      String           @db.ObjectId    
   isArchived   Boolean         @default(false)
   members      ProjectMember[]
   boards       Board[]
