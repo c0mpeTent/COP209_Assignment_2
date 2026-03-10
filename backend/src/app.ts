@@ -1,9 +1,13 @@
 import express from "express";
+import cors from "cors";
 import type { Application } from "express";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 
 const app: Application = express();
+
+//cors
+app.use(cors());
 
 // Middleware to read JSON bodies
 app.use(express.json());
