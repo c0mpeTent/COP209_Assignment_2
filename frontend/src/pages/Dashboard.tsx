@@ -1,5 +1,4 @@
-// import React, { useEffect, useState } from "react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 import ProjectList from "../components/ProjectList"; // We'll create this next
 import styles from "./Dashboard.module.css";
@@ -17,7 +16,7 @@ const Dashboard: React.FC = () => {
   // const [userName, setUserName] = useState("User");
   // const [projects, setProjects] = useState([]);
   // const [loading, setLoading] = useState(true);
-  const [userName] = useState("User");
+  // const [userName] = useState("User");
   //const [projects, setProjects] = useState<Project[]>([]);
   const [projects, setProjects] = useState<Project[]>([
     {
@@ -42,7 +41,10 @@ const Dashboard: React.FC = () => {
       updatedAt: new Date().toISOString(),
     }
   ]);
-  const [loading] = useState(false);
+  // const [loading] = useState(false);
+  const [userName,setUserName] = useState("User");
+  // const [projects, setProjects] = useState<Project[]>([]);
+  const [loading,setLoading] = useState(false);
   const [newProjectName, setNewProjectName] = useState(""); // Track input value
 
   const handleCreateProject = async () => {
@@ -93,38 +95,41 @@ const Dashboard: React.FC = () => {
       currentProjects.filter((project) => project.id !== projectId)
     );
   };
-  // useEffect(() => {
-  //   const fetchDashboardData = async () => {
-  //     try {
-  //      const token = "you are stupid ";
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [userRes, projRes] = await Promise.all([
+          fetch(import.meta.env.VITE_API_URL + "/api/auth/me",  {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+            credentials: "include", // Include cookies for session management
+          }),
+          fetch(import.meta.env.VITE_API_URL + "/api/projects",  {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include", // Include cookies for session management
+          })
+        ]);
 
-  //       const [userRes, projRes] = await Promise.all([
-  //         fetch("http://localhost:5000/api/auth/me", {
-  //           headers: { "Authorization": `Bearer ${token}` }
-  //         }),
-  //         fetch("http://localhost:5000/api/projects", {
-  //           headers: { "Authorization": `Bearer ${token}` }
-  //         })
-  //       ]);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUserName(userData.name);
+        }
 
-  //       if (userRes.ok) {
-  //         const userData = await userRes.json();
-  //         setUserName(userData.name);
-  //       }
+        if (projRes.ok) {
+          const projData = await projRes.json();
+          setProjects(projData);
+        }
+      } catch (error) {
+        console.error("Dashboard Load Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //       if (projRes.ok) {
-  //         const projData = await projRes.json();
-  //         setProjects(projData);
-  //       }
-  //     } catch (error) {
-  //       console.error("Dashboard Load Error:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchDashboardData();
-  // }, [navigate]);
+    fetchDashboardData();
+  });
 
   if (loading) return <div className={styles.loading}>Loading Workspace...</div>;
 

@@ -6,6 +6,7 @@ import prisma from "../lib/prisma.js";
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
+    console.log(email, password, name);
 
     // user already exists or not
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -87,3 +88,23 @@ export const logout = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Logout failed", error });
   }
 };
+export const validateToken = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
+    const id = (decoded as any).userId;
+    const user = await prisma.user.findUnique({ where: { id } });
+    
+    if (!user) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    res.status(200).json({ message: "Token is valid", user : { id: user.id, name: user.name, email: user.email , avatarUrl: user.avatarUrl } });
+  } catch (error) {
+    res.status(500).json({ message: "Token validation failed", error });
+  }
+};
+

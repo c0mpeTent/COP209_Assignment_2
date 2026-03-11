@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate} from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 // Import your Auth component
@@ -12,9 +13,32 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 
 function App() {
-  // Simple check: do we have a token in LocalStorage?
-  // const isAuthenticated = !!localStorage.getItem("token");
-  const isAuthenticated = true;
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // 'null' means "loading"
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/auth/me`, {
+          method: "GET",
+          credentials: "include", 
+        });
+        
+        setIsAuthenticated(response.ok);
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []); 
+
+  // While waiting for the server, show a spinner or nothing
+  if (isLoading) {
+    return <div className="loading">Checking authentication...</div>;
+  }
 
   return (
     <div className="app">
