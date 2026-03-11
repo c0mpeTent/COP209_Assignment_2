@@ -1,0 +1,96 @@
+/* Container for the entire board */
+.kanbanContainer {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto; /* Screen independence: scroll horizontally on small screens */
+  padding: 20px;
+  height: calc(100vh - 200px);
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Individual Column */
+.column {
+  background-color: #1a1a1a;
+  min-width: 300px; /* Consistent width for vertical stacking of cards */
+  max-width: 350px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+/* Column Header with WIP Ratio */
+.columnHeader {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+
+.columnHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #efefef;
+}
+
+.wipLimit {
+  font-size: 0.85rem;
+  background: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.wipLimitFull {
+  background: #ff4d4d;
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+/* Scrollable Task List */
+.taskList {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 150px; /* Area to drop tasks even when empty */
+}
+
+/* Task Card Design */
+.taskCard {
+  background: #2d2d2d;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: grab;
+  border-left: 4px solid transparent;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.taskCard:active {
+  cursor: grabbing;
+}
+
+.taskCard:hover {
+  background: #383838;
+}
+
+/* Priority Coloring */
+.critical { border-left-color: #ff4d4d; }
+.high { border-left-color: #ffa500; }
+.medium { border-left-color: #007bff; }
+.low { border-left-color: #28a745; }
+
+.taskTypeTag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}

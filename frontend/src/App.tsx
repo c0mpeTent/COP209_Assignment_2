@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate} from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import ProjectDetails from './pages/ProjectDetails';
 import './App.css';
 
 // Import your Auth component
@@ -26,6 +27,7 @@ function App() {
         
         setIsAuthenticated(response.ok);
       } catch (error) {
+        console.error("Auth Check Failed:", error); // Now the variable is used!
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -59,7 +61,19 @@ function App() {
             )
           } 
         />
-
+        {/* project route */}
+        <Route 
+          path="/project/:id"  // The ':id' is the dynamic part
+          element={
+            isAuthenticated ? (
+              <Layout>
+                <ProjectDetails />
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          } 
+        />
         <Route 
           path="/profile" 
           element={

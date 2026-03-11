@@ -22,7 +22,7 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ workflows, userRole, onAdd }
   };
 
   return (
-    <div className={styles.card}>
+    <div className={styles.cardws}>
       <div className={styles.cardHeader}>
         <h2>Workflows & Boards</h2>
         {canAddWorkflow && (
@@ -42,7 +42,7 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ workflows, userRole, onAdd }
         )}
       </div>
       
-      <div className={styles.grid}>
+      <div className={styles.gridws}>
         {workflows.map((wf, i) => (
           <div key={i} className={styles.boardCard}>
             <div className={styles.boardInfo}>

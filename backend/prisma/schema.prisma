@@ -23,6 +23,7 @@ model User {
 }
 
 enum ProjectRole {
+  GLOBAL_ADMIN
   PROJECT_ADMIN
   PROJECT_MEMBER
   PROJECT_VIEWER

@@ -1,0 +1,14 @@
+.kanbanContainer {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto; /* Screen independent: scroll horizontally if columns don't fit */
+  padding: 20px 0;
+  height: calc(100vh - 150px);
+  align-items: flex-start;
+}
+
+.boardWrapper {
+  width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+}

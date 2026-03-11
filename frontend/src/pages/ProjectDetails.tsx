@@ -47,7 +47,7 @@ const ProjectDetails: React.FC = () => {
     <div className={styles.container}>
       {/* Header showing which project we are in */}
       <header className={styles.projectHeader}>
-        <h1 className={styles.projectName}>Project ID: {id}</h1>
+        <h1 className={styles.projectName}>Project Id : {id}</h1>
         <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
       </header>
 

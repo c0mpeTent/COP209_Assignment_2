@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
     };
   
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/create`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
             headers: { "Content-Type": "application/json" },
             credentials: "include", // Include cookies for session management
           }),
-          fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/projects",  {
+          fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/project/get",  {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include", // Include cookies for session management

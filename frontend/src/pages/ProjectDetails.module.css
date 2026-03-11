@@ -20,6 +20,7 @@
 }
 
 .layoutGrid {
+  margin-left: 20px;
   display: grid;
   grid-template-columns: 1fr 350px; /* Big column and fixed sidebar */
   gap: 2rem;
@@ -27,11 +28,12 @@
 }
 
 .loader {
+  margin-left: 400px;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 50vh;
-  color: #bb86fc;
+  color: #ffffff;
   font-weight: bold;
 }
 

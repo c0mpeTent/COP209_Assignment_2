@@ -4,6 +4,19 @@
   padding: 1.5rem;
   border: 1px solid #333;
 }
+.cardws {
+  display: flex;
+  flex-direction: column;
+
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #333;
+  width: 50vw;            /* Fill the parent width */
+  box-sizing: border-box; /* Ensures padding doesn't add to the width */
+  max-width: 1200px;      /* Optional: prevents it from looking too stretched on ultrawide monitors */
+  margin: 0 auto;         /* Centers the card if it hits the max-width */
+}
 
 .cardHeader h2 {
   font-size: 1.1rem;
@@ -45,6 +58,12 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.gridws {
+  display: flex;        /* Or keep grid, but flex is simpler for one column */
+  flex-direction: column; 
+  width: 100%;          /* Ensure it stretches across the column */
   gap: 12px;
 }
 
@@ -175,7 +194,7 @@
 
 /* Update the boardCard to be a flex container with space-between */
 .boardCard {
-  background: #222;
+  background: #2d2d2d;
   padding: 12px 16px;
   border-radius: 8px;
   display: flex;
@@ -190,6 +209,12 @@
   border-color: #444;
 }
 
+
+.boardCard:hover {
+  border-color: #360066;
+  background-color: #0e0e0e ;
+  transform: translateY(-2px); /* Subtle "lift" effect you might like */
+}
 .boardInfo {
   display: flex;
   align-items: center;
