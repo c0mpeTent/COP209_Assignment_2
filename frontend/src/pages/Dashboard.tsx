@@ -4,17 +4,25 @@ import React, { useState } from "react";
 import ProjectList from "../components/ProjectList"; // We'll create this next
 import styles from "./Dashboard.module.css";
 
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Dashboard: React.FC = () => {
   // const navigate = useNavigate();
   // const [userName, setUserName] = useState("User");
   // const [projects, setProjects] = useState([]);
   // const [loading, setLoading] = useState(true);
   const [userName] = useState("User");
-  const [projects, setProjects] = useState([{id:"",name:"",description:""}]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading] = useState(false);
   const [newProjectName, setNewProjectName] = useState(""); // Track input value
 
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
 
     // Simulation of project creation
@@ -22,11 +30,36 @@ const Dashboard: React.FC = () => {
       id: Date.now().toString(),
       name: newProjectName,
       description: "A new project management board", // Required metadata 
-      // createdAt: new Date().toISOString(), // Required timestamp 
+      createdAt: new Date().toISOString(), // Required timestamp
+      updatedAt: new Date().toISOString(), // Required timestamp 
     };
-
-    setProjects([...projects, newProject]);
-    setNewProjectName(""); // Clear input after creation
+    try {
+      const response = await fetch("http://localhost:5000/api/projects", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          // The assignment requires JWT tokens for authentication [cite: 73]
+          "Authorization": `Bearer ${localStorage.getItem("token")}` 
+        },
+        body: JSON.stringify(newProject)
+      });
+  
+      if (response.ok) {
+        const savedProject = await response.json();
+        // Add the real project (with DB-generated ID and timestamps) to state
+        setProjects([...projects, savedProject]);
+        setNewProjectName("");
+      }
+    } catch (error) {
+      console.error("Failed to save project:", error);
+    }
+    
+  };
+  const handleDeleteProject = (projectId: string) => {
+    // We use filter to keep every project EXCEPT the one with the matching ID
+    setProjects((currentProjects) => 
+      currentProjects.filter((project) => project.id !== projectId)
+    );
   };
   // useEffect(() => {
   //   const fetchDashboardData = async () => {
@@ -108,7 +141,7 @@ const Dashboard: React.FC = () => {
   
       {/* The grid of projects */}
       <div className={styles.listSection}>
-        <ProjectList items={projects} />
+        <ProjectList items={projects} onDelete={handleDeleteProject} />
       </div>
   
     </div>
