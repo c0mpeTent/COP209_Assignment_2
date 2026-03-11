@@ -16,6 +16,7 @@ model User {
   memberships     ProjectMember[]
   createdTasks    Task[]         @relation("Reporter")
   assignedTasks   Task[]         @relation("Assignee")
+  comments Comment[]
   notifications   Notification[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

@@ -48,7 +48,6 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    console.log("Login request:", { email, password });
     const user = await prisma.user.findUnique({ where: { email } }); // see if user exist
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -74,5 +73,17 @@ export const login = async (req: Request, res: Response) => {
     res.status(200).json({ message: "Login successful", user: { id: user.id, name: user.name, email } });
   } catch (error) {
     res.status(500).json({ message: "Login failed", error });
+  }
+};
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie('token',{
+      httpOnly: true, 
+      secure: true,
+      maxAge: 0, // 0 means delete the cookie
+    });
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ message: "Logout failed", error });
   }
 };
