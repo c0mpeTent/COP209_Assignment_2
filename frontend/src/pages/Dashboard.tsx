@@ -18,43 +18,75 @@ const Dashboard: React.FC = () => {
   // const [projects, setProjects] = useState([]);
   // const [loading, setLoading] = useState(true);
   const [userName] = useState("User");
-  const [projects, setProjects] = useState<Project[]>([]);
+  //const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([
+    {
+      id: "p1",
+      name: "Distributed Systems Lab",
+      description: "Working on Raft consensus algorithm implementation.",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "p2",
+      name: "Portfolio Website",
+      description: "Personal React project with cinematic UI elements.",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "p3",
+      name: "Compiler Design",
+      description: "Lexical analyzer and parser for a subset of C.",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+  ]);
   const [loading] = useState(false);
   const [newProjectName, setNewProjectName] = useState(""); // Track input value
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
-
-    // Simulation of project creation
-    const newProject = {
-      id: Date.now().toString(),
+  
+    // Only send what the Backend actually needs to create a new entry
+    const payload = {
       name: newProjectName,
-      description: "A new project management board", // Required metadata 
-      createdAt: new Date().toISOString(), // Required timestamp
-      updatedAt: new Date().toISOString(), // Required timestamp 
+      description: "A new project management board",
     };
+  
     try {
-      const response = await fetch("http://localhost:5000/api/projects", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          // The assignment requires JWT tokens for authentication [cite: 73]
-          "Authorization": `Bearer ${localStorage.getItem("token")}` 
         },
-        body: JSON.stringify(newProject)
+        // Use this if you are using Cookies/Sessions like your Login code
+        credentials: "include", 
+        
+        /* OR keep this ONLY if your backend specifically requires JWT in headers:
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}` 
+        }, 
+        */
+        body: JSON.stringify(payload)
       });
   
+      const data = await response.json();
+  
       if (response.ok) {
-        const savedProject = await response.json();
-        // Add the real project (with DB-generated ID and timestamps) to state
-        setProjects([...projects, savedProject]);
+        // Use 'data' (the object returned from DB) so you get the real _id
+        setProjects((prev) => [...prev, data]);
         setNewProjectName("");
+      } else {
+        console.error("Server Refused:", data.message);
+        alert(`Error: ${data.message || "Could not create project"}`);
       }
     } catch (error) {
-      console.error("Failed to save project:", error);
+      console.error("Network/App Error:", error);
     }
-    
   };
+
   const handleDeleteProject = (projectId: string) => {
     // We use filter to keep every project EXCEPT the one with the matching ID
     setProjects((currentProjects) => 

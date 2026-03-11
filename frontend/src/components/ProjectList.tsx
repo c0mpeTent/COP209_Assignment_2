@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // 1. Import useNavigate
 import styles from "./ProjectList.module.css";
 
 interface Project {
@@ -13,12 +14,19 @@ interface ProjectListProps {
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({ items, onDelete }) => {
+  const navigate = useNavigate(); // 2. Initialize the hook
+  
   const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
     e.stopPropagation(); // Prevents clicking 'X' from also triggering 'Open Board'
     const confirmed = window.confirm(`Are you sure you want to delete the project "${name}"?`);
     if (confirmed) {
       onDelete(id);
     }
+  };
+
+  // 3. Navigation Handler
+  const handleOpenProject = (id: string) => {
+    navigate(`/project/${id}`); // Adjust this path to match your App.tsx Route path
   };
 
   return (
@@ -46,7 +54,14 @@ const ProjectList: React.FC<ProjectListProps> = ({ items, onDelete }) => {
                 {project.description || "No description provided."}
               </p>
               <div className={styles.cardFooter}>
-                <button className={styles.viewBtn}>Open Board</button>
+                <button 
+                    className={styles.viewBtn}
+                    onClick={() => {
+                      handleOpenProject(project.id);
+                    }}
+                  >
+                    Open Project
+                </button>
               </div>
             </div>
           ))

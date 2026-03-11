@@ -18,7 +18,7 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/me", {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/auth/me`, {
           // Note: Requirements specify HTTP-only cookies for tokens 
           // If using cookies, add credentials: "include"
           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
@@ -37,7 +37,7 @@ const Profile: React.FC = () => {
       }
     };
     fetchProfile();
-  }, []); // Added missing dependency array to prevent infinite loop
+}); // Added missing dependency array to prevent infinite loop
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -54,7 +54,7 @@ const Profile: React.FC = () => {
     formData.append("avatar", file);
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/avatar", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/user/avatar`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
         body: formData,
