@@ -73,12 +73,13 @@ const Dashboard: React.FC = () => {
         */
         body: JSON.stringify(payload)
       });
-  
+      console.log("this point reached1");
+      console.log(response);
       const data = await response.json();
-  
+      console.log("this point reached2", data);
       if (response.ok) {
         // Use 'data' (the object returned from DB) so you get the real _id
-        setProjects((prev) => [...prev, data]);
+        setProjects((prev) => [...prev, data.project]);
         setNewProjectName("");
       } else {
         console.error("Server Refused:", data.message);
@@ -89,11 +90,28 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
     // We use filter to keep every project EXCEPT the one with the matching ID
-    setProjects((currentProjects) => 
-      currentProjects.filter((project) => project.id !== projectId)
-    );
+    try {
+      const deleteResponse = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete/${projectId}`, {
+        method: "DELETE",
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: "include", 
+      });
+      if (!deleteResponse.ok) {
+        console.error("Server Refused:", deleteResponse.statusText);
+        alert(`Error: ${deleteResponse.statusText || "Could not delete project"}`);
+        return;
+      }
+      setProjects((currentProjects) => 
+        currentProjects.filter((project) => project.id !== projectId)
+      );
+    } catch (error) {
+      console.error("Network/App Error:", error);
+      return;
+    }
   };
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -119,7 +137,7 @@ const Dashboard: React.FC = () => {
 
         if (projRes.ok) {
           const projData = await projRes.json();
-          setProjects(projData);
+          setProjects(projData.projects);
         }
       } catch (error) {
         console.error("Dashboard Load Error:", error);
@@ -129,7 +147,7 @@ const Dashboard: React.FC = () => {
     };
 
     fetchDashboardData();
-  });
+  },[]);
 
   if (loading) return <div className={styles.loading}>Loading Workspace...</div>;
 
