@@ -1,0 +1,214 @@
+.card {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #333;
+}
+
+.cardHeader h2 {
+  font-size: 1.1rem;
+  color: #bb86fc;
+  margin: 0 0 1rem 0;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup input {
+  flex: 1;
+  background: #121212;
+  border: 1px solid #444;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  outline: none;
+}
+
+.inputGroup input:focus {
+  border-color: #bb86fc;
+}
+
+.addBtn {
+  background: #bb86fc;
+  color: #121212;
+  border: none;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Workflow Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.boardCard {
+  background: #222;
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.boardCard:hover {
+  border-color: #444;
+  background: #282828;
+}
+
+/* Team List */
+.list {
+  list-style: none;
+  padding: 0;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #333;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userEmail { font-size: 0.9rem; }
+
+.roleBadge {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.roleSelect {
+  background: #333;
+  color: #bb86fc;
+  border: 1px solid #444;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.menuContainer {
+  position: relative; /* Anchor for the absolute menu */
+}
+
+.threeDots {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 8px;
+  transition: color 0.2s;
+}
+
+.threeDots:hover {
+  color: #bb86fc;
+}
+
+.disabledDots {
+  color: #333;
+  padding: 0 8px;
+  font-size: 1.5rem;
+  cursor: not-allowed;
+}
+
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: #252525;
+  border: 1px solid #444;
+  border-radius: 8px;
+  width: 160px;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuTitle {
+  font-size: 0.7rem;
+  color: #666;
+  padding: 4px 12px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.dropdownMenu button {
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dropdownMenu button:hover {
+  background: #333;
+  color: #bb86fc;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #444;
+  margin: 4px 0;
+}
+
+.removeBtn {
+  color: #ff5555 !important;
+}
+
+/* Update the boardCard to be a flex container with space-between */
+.boardCard {
+  background: #222;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes button to the right */
+  gap: 12px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.boardCard:hover {
+  border-color: #444;
+}
+
+.boardInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.showBtn {
+  background: rgba(187, 134, 252, 0.1);
+  color: #bb86fc;
+  border: 1px solid #bb86fc;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.showBtn:hover {
+  background: #bb86fc;
+  color: #121212;
+}

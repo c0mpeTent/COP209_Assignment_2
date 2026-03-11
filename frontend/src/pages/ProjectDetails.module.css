@@ -1,0 +1,46 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.projectHeader {
+  margin-bottom: 2.5rem;
+}
+
+.projectName {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+}
+
+.projectMeta {
+  color: #888;
+  margin-top: 0.5rem;
+}
+
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 1fr 350px; /* Big column and fixed sidebar */
+  gap: 2rem;
+  align-items: start;
+}
+
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  color: #bb86fc;
+  font-weight: bold;
+}
+
+@media (max-width: 1100px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sideCol {
+    order: 2; /* Team moves below workflows on small screens */
+  }
+}
