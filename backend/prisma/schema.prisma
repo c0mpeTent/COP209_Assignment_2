@@ -13,6 +13,123 @@ model User {
   password        String          // hashed
   name            String
   avatarUrl       String
+  memberships     ProjectMember[]
+  createdTasks    Task[]         @relation("Reporter")
+  assignedTasks   Task[]         @relation("Assignee")
+  notifications   Notification[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+}
+
+enum ProjectRole {
+  PROJECT_ADMIN
+  PROJECT_MEMBER
+  PROJECT_VIEWER
+}
+
+model Project {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  name         String    
+  description  String?
+  ownerId      String           @db.ObjectId    
+  isArchived   Boolean         @default(false)
+  members      ProjectMember[]
+  boards       Board[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model ProjectMember {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  role      ProjectRole 
+  userId    String             @db.ObjectId
+  user      User               @relation(fields: [userId], references: [id])
+  projectId String             @db.ObjectId
+  project   Project            @relation(fields: [projectId], references: [id])
+  @@unique([userId, projectId]) // A user has only one role per project
+}
+
+model Board {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  projectId String             @db.ObjectId
+  project   Project            @relation(fields: [projectId], references: [id])
+  columns   Column[]
+  tasks     Task[]
+}
+
+model Column {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  name      String             // e.g., "To Do", "In Progress" [cite: 106]
+  order     Int                // For reordering columns [cite: 111]
+  wipLimit  Int?               // Mandatory: Must block invalid moves if full 
+  boardId   String             @db.ObjectId
+  board     Board              @relation(fields: [boardId], references: [id])
+}
+
+enum TaskType {
+  STORY
+  TASK
+  BUG
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Task {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  title         String 
+  description   String 
+  type          TaskType 
+  status        String         // Linked to Column name
+  priority      Priority        @default(MEDIUM) 
+  dueDate       DateTime? 
+
+  // Parent-Child Hierarchy 
+  parentStoryId String?   @db.ObjectId
+  parentStory   Task?     @relation("StoryChildren", fields: [parentStoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subTasks      Task[]    @relation("StoryChildren")
+
+  // Audit Trail 
+  // Stores history like: { event: "STATUS_CHANGE", old: "To Do", new: "In Progress", time: Date }
+  history       Json[]
+
+  // Timestamps 
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+
+  // Relations
+  boardId       String    @db.ObjectId
+  board         Board     @relation(fields: [boardId], references: [id])
+  reporterId    String    @db.ObjectId
+  reporter      User      @relation("Reporter", fields: [reporterId], references: [id])
+  assigneeId    String?   @db.ObjectId
+  assignee      User?     @relation("Assignee", fields: [assigneeId], references: [id])
+  comments      Comment[]
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  taskId    String   @db.ObjectId
+  task      Task     @relation(fields: [taskId], references: [id])
+  authorId  String   @db.ObjectId
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  message   String
+  isRead    Boolean  @default(false)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }

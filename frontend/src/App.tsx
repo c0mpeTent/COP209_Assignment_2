@@ -18,10 +18,10 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        {/* --- PUBLIC ROUTES --- */}
+        {/* auth routes */}
         <Route path="/auth" element={<AuthForm />} />
 
-        {/* --- PROTECTED ROUTES (Wrapped in Layout) --- */}
+        {/* dashboard route */}
         <Route 
           path="/dashboard" 
           element={
