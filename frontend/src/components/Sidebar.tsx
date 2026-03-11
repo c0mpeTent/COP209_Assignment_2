@@ -6,8 +6,22 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout =  async() => {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+        credentials: "include", // Include cookies for session management
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      // 3. Success! Handle the response
+      console.log("Success:", data);
     navigate("/auth");
     window.location.reload(); 
   };

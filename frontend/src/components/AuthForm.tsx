@@ -39,9 +39,6 @@ const AuthForm: React.FC = () => {
       console.log("Success:", data);
 
       if (isLogin) {
-        // Store the JWT token in LocalStorage so the "Security Guard" can see it later
-        localStorage.setItem("token", data.token);
-
         // navigate("/dashboard");
         navigate("/dashboard");
         window.location.reload();
@@ -61,7 +58,7 @@ const AuthForm: React.FC = () => {
       <h2>{isLogin ? "Login To your Account" : "Create New Account"}</h2>
       <br></br>
       <form onSubmit={OnSubmit}>
-        <div>
+        {!isLogin && (<div>
           <h3> User name </h3>
           <input
             className={styles.input_field}
@@ -71,7 +68,7 @@ const AuthForm: React.FC = () => {
             onChange={(ev) => setUser_name(ev.target.value)}
             required
           />
-        </div>
+        </div>)}
         <div>
           <h3> Email </h3>
           <input
