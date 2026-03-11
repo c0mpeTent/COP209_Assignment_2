@@ -108,3 +108,23 @@ export const validateToken = async (req: Request, res: Response) => {
   }
 };
 
+export const addAuthenticateUser = async (req :Request, res :Response,next :Function) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    const id = (decoded as any).userId;
+    const user = await prisma.user.findUnique({ where: { id } });
+    
+    if (!user) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    res.status(500).json({ message: "User authentication failed", error });
+  }
+};
+

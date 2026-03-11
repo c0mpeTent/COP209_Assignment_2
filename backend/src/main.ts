@@ -5,7 +5,8 @@ import cookieParser from 'cookie-parser';
 import { PrismaClient } from '@prisma/client';
 
 import authRoutes from './routes/authRoutes.js';
-
+import projectRoutes from './routes/projectRoutes.js';
+import {addAuthenticateUser} from './controllers/authController.js';
 dotenv.config();
 
 const app = express();
@@ -30,6 +31,8 @@ await prisma.$connect();
 //  auth: register and login
 app.use("/api/auth", authRoutes);
 
+// project: create, get, update, delete projects
+app.use("/api/project", addAuthenticateUser, projectRoutes);
 
 // 3. Start Listening
 app.listen(PORT, () => {
