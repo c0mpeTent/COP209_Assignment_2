@@ -18,15 +18,16 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/me", {
-          // Note: Requirements specify HTTP-only cookies for tokens 
-          // If using cookies, add credentials: "include"
-          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-        });
+        const response = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include", // Include cookies for session management
+          });
 
         if (response.ok) {
           const data = await response.json();
-          setUser(data);
+          console.log(data);
+          setUser(data.user);
         } else {
           handleLogout();
         }

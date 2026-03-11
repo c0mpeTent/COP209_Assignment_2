@@ -7,7 +7,7 @@ const AuthForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user_name, setUser_name] = useState("");
+  const [name, setName] = useState("");
 
   const OnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +18,7 @@ const AuthForm: React.FC = () => {
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     const payload = isLogin
       ? { email, password }
-      : { email, password, name, avatarUrl: "" }; // Matches your User model
+      : { email, password, name }; // Matches your User model
 
     try {
       // 2. Make the API Request
@@ -63,9 +63,9 @@ const AuthForm: React.FC = () => {
           <input
             className={styles.input_field}
             type="text"
-            id="user_name"
-            value={user_name}
-            onChange={(ev) => setUser_name(ev.target.value)}
+            id="name"
+            value={name}
+            onChange={(ev) => setName(ev.target.value)}
             required
           />
         </div>)}
