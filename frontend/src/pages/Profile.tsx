@@ -1,36 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Profile.module.css";
 
 interface UserProfile {
   name: string;
   email: string;
-  
+  avatarUrl?: string; // Support for display 
 }
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/auth");
-          return;
-        }
-
         const response = await fetch("http://localhost:5000/api/auth/me", {
-          headers: { "Authorization": `Bearer ${token}` }
+          // Note: Requirements specify HTTP-only cookies for tokens 
+          // If using cookies, add credentials: "include"
+          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
 
         if (response.ok) {
           const data = await response.json();
           setUser(data);
         } else {
-          // If the token is invalid or expired
           handleLogout();
         }
       } catch (error) {
@@ -39,33 +36,84 @@ const Profile: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchProfile();
-  });
+  }, []); // Added missing dependency array to prevent infinite loop
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/auth");
-    window.location.reload(); // Ensures all states are cleared
+  };
+
+  const triggerFileSelect = () => fileInputRef.current?.click();
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/user/avatar", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser); // Update UI with new avatar URL 
+        setShowAvatarMenu(false);
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
   };
 
   if (loading) return <div className={styles.loading}>Loading Profile...</div>;
 
   return (
     <div className={styles.profileContainer}>
-
       <main className={styles.card}>
-        <div className={styles.avatarSection}>
-          <div className={styles.avatarPlaceholder}>
-            {user?.name.charAt(0).toUpperCase()}
+        {/* Avatar Section with Hover Menu */}
+        <div 
+          className={styles.avatarWrapper} 
+          onMouseEnter={() => setShowAvatarMenu(true)}
+          onMouseLeave={() => setShowAvatarMenu(false)}
+        >
+          <div className={styles.avatarCircle}>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className={styles.avatarImg} />
+            ) : (
+              user?.name.charAt(0).toUpperCase()
+            )}
           </div>
-          <h1 className={styles.userName}>{user?.name}</h1>
+
+          {showAvatarMenu && (
+            <div className={styles.avatarOverlay}>
+              <button onClick={triggerFileSelect}>Change Photo</button>
+              <button className={styles.deleteBtn}>Delete Photo</button>
+            </div>
+          )}
         </div>
+
+        {/* Hidden File Input */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: "none" }} 
+          accept="image/*"
+          onChange={handleFileChange}
+        />
 
         <div className={styles.infoSection}>
           <div className={styles.infoGroup}>
-            <label>Email Address</label>
-            <p>{user?.email}</p>
+            <label className={styles.label}>User Name:</label>
+            <p className={styles.valueBox}>{user?.name}</p>
+          </div>
+          <div className={styles.infoGroup}>
+            <label className={styles.label}>Email Address:</label>
+            <p className={styles.valueBox}>{user?.email}</p>
           </div>
         </div>
 

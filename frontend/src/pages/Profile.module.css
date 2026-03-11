@@ -1,23 +1,21 @@
+
 .profileContainer {
   background-color: #121212;
-  min-height: 100vh;
-  color: #e0e0e0;
+  position: fixed;
+  top: 0;
+  /* Start after the sidebar */
+  left: 300px; 
+  height: 100vh;
+  /* Fill only the remaining width */
+  width: calc(100% - 300px); 
+  
   display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.navbar {
-  width: 100%;
-  padding: 20px 40px;
-}
-
-.backBtn {
-  background: transparent;
-  color: #bb86fc;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
+  justify-content: center; 
+  align-items: center;     
+  
+  /* Remove the padding-left since the container itself is shifted */
+  padding: 20px;
+  z-index: 1; 
 }
 
 .card {
@@ -25,92 +23,123 @@
   border: 1px solid #333;
   border-radius: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 700px;
   padding: 40px;
-  margin-top: 40px;
+  /* Removed margin-right: 160px and margin: 80px auto */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
   text-align: center;
 }
 
-.avatarPlaceholder {
-  width: 80px;
-  height: 80px;
-  background-color: #bb86fc;
-  color: #121212;
+.infoSection {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+
+/* Avatar Hover Menu Styling */
+.avatarWrapper {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  cursor: pointer;
+  padding: 20px;
+}
+
+.avatarCircle {
+  width: 200px;
+  height: 200px;
+  background-color: #a862fe;
+  color: #101010;
   border-radius: 50%;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
+  overflow: hidden;
+  
 }
 
-.userName {
-  margin: 10px 0;
-  font-size: 1.8rem;
+
+.avatarOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  animation: fadeIn 0.2s ease;
 }
 
-.roleBadge {
-  background: rgba(187, 134, 252, 0.1);
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.avatarOverlay button {
+  background: transparent;
+  border: none;
   color: #bb86fc;
-  padding: 4px 12px;
-  border-radius: 20px;
   font-size: 0.8rem;
-  border: 1px solid rgba(187, 134, 252, 0.3);
-}
-
-.infoSection {
-  margin-top: 40px;
-  text-align: left;
-}
-
-.infoGroup {
-  margin-bottom: 20px;
-}
-
-.infoGroup label {
-  display: block;
-  color: #888;
-  font-size: 0.8rem;
-  margin-bottom: 5px;
+  font-weight: bold;
+  cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
-.infoGroup p {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #fff;
+.avatarOverlay .deleteBtn {
+  color: #ff5555;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .actionSection {
-  margin-top: 40px;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.infoGroup {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center; /* Vertically centers the label with the box */
+  justify-content: space-between; /* Pushes label left and box right */
+  width: 100%;
+  max-width: 500px; /* Keeps the form section neat */
+  margin-bottom: 20px;
+  gap: 20px; /* Space between label and box */
 }
 
-.editBtn {
-  background-color: #bb86fc;
-  color: #121212;
-  border: none;
-  padding: 12px;
+.label {
+  color: #888;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap; /* Prevents label from wrapping */
+  flex: 1; /* Takes up space on the left */
+}
+
+.valueBox {
+  flex: 2; /* Box is wider than the label */
+  background-color: #121212; /* Darker than the card */
+  border: 1px solid #333;
   border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.logoutBtn {
-  background: transparent;
-  color: #ff5555;
-  border: 1px solid #ff5555;
-  padding: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.logoutBtn:hover {
-  background: #ff5555;
+  padding: 12px 16px;
   color: #fff;
+  font-size: 1rem;
+  text-align: left; /* Text stays left-aligned inside the box */
+  margin: 0;
 }

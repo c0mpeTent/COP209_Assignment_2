@@ -13,7 +13,8 @@ import Profile from './pages/Profile';
 
 function App() {
   // Simple check: do we have a token in LocalStorage?
-  const isAuthenticated = !!localStorage.getItem("token");
+  // const isAuthenticated = !!localStorage.getItem("token");
+  const isAuthenticated = true;
 
   return (
     <div className="app">

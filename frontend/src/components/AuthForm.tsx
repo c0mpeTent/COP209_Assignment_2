@@ -34,7 +34,7 @@ const AuthForm: React.FC = () => {
       if (!response.ok) {
         throw new Error(data.message || "Something went wrong");
       }
-
+      setIsLogin(true);
       // 3. Success! Handle the response
       console.log("Success:", data);
 
