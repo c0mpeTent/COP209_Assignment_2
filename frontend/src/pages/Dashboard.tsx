@@ -99,13 +99,12 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const [userRes, projRes] = await Promise.all([
-          fetch(import.meta.env.VITE_API_URL + "/api/auth/me",  {
+          fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
             method: "GET",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
             credentials: "include", // Include cookies for session management
           }),
-          fetch(import.meta.env.VITE_API_URL + "/api/projects",  {
+          fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/projects",  {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include", // Include cookies for session management
@@ -114,7 +113,8 @@ const Dashboard: React.FC = () => {
 
         if (userRes.ok) {
           const userData = await userRes.json();
-          setUserName(userData.name);
+          console.log(userData);
+          setUserName(userData.user.name);
         }
 
         if (projRes.ok) {
