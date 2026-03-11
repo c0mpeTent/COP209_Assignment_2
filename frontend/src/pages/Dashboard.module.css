@@ -1,8 +1,8 @@
-.dashboardContainer {
+/* .dashboardContainer {
   background-color: #121212;
   color: #e0e0e0;
   min-height: 100vh;
-}
+} */
 
 .navbar {
   display: flex;
@@ -32,11 +32,11 @@
   color: #121212;
 }
 
-.content {
+/* .content {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-}
+} */
 
 .createBtn {
   background-color: #bb86fc;
@@ -86,6 +86,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  margin-top: 20px;
 }
 
 .projectGrid {
@@ -151,14 +152,14 @@
 .titleSection .subtitle {
   margin: 0.5rem 0 0 0;
   color: #888;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .createBtn {
   background-color: #bb86fc;
   color: #121212;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 20px ;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
@@ -201,4 +202,131 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* This locks the dashboard to the right of the 300px sidebar */
+.dashboardContainer {
+  background-color: #121212;
+  position: fixed;
+  top: 0;
+  left: 300px; /* Same as Profile */
+  height: 100vh;
+  width: calc(100% - 300px); 
+  color: #e0e0e0;
+  overflow-y: auto; /* Allows scrolling if you have many projects */
+  z-index: 1;
+}
+
+/* Updated content section to handle internal spacing */
+.content {
+  padding: 3rem; /* More breathing room for the grid */
+  max-width: 1400px; /* Slightly wider for laptop dashboards */
+  margin: 0 auto;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Keeps the header pinned or aligned at the top of the scrollable area */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navActions span {
+  font-size: 1.5rem; /* Makes the text significantly bigger */
+  font-weight: 600;  /* Adds some weight so it looks like a proper greeting */
+  color: #f7f5f9;    /* Uses your theme's primary accent color */
+  letter-spacing: 0.5px;
+}
+
+.Hiuser {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* Centers the child div horizontally */
+  align-items: center;     /* Centers the child div vertically */
+  padding: 20px 0;
+  border-bottom: 1px solid #333;
+  background-color: #1e1e1e;
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  /* No need for justify-content here if it's just one item, 
+     but helpful if you add an avatar later */
+}
+
+.navActions span {
+  font-size: 2rem; /* Increased slightly for more impact */
+  font-weight: 700;
+  color: #f7f5f9;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.headercp {
+  display: flex;
+  /* This pushes the entire creation group to the very left */
+  justify-content: flex-start; 
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.createGroup {
+  display: flex;
+  align-items: center;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 4px;
+  margin-left: 20px;
+  /* This ensures the group doesn't stretch too wide but stays left */
+  width: fit-content; 
+}
+
+.projectInput {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 1rem;
+  outline: none;
+  /* Width of the writing area before the button */
+  width: 900px;
+  margin-left: 20px; 
+}
+
+.projectInput::placeholder {
+  color: #666;
+  font-size: larger;
+}
+
+.createBtn {
+  background-color: #bb86fc;
+  color: #121212;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.createBtn:hover {
+  background-color: #d7b7fd;
+  transform: scale(1.02);
 }

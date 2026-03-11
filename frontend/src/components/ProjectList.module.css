@@ -20,6 +20,7 @@
 }
 
 .tag {
+  margin-top: 10px;
   font-size: 0.7rem;
   background: rgba(187, 134, 252, 0.1);
   color: #bb86fc;
@@ -47,4 +48,83 @@
 .viewBtn:hover {
   border-color: #bb86fc;
   color: #bb86fc;
+}
+/* .empty {
+  border: 2px dashed #333;
+  padding: 60px; 
+  margin-top: 20px;
+  border-radius: 12px;
+  
+
+  display: flex;
+  justify-content: center; 
+  align-items: center;    
+  text-align: center;
+  
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.empty p {
+  margin: 0;
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 500;
+  max-width: 600px; 
+  line-height: 1.5;
+} */
+
+.message {
+  margin: 0;
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 500;
+  max-width: 600px; 
+  line-height: 1.5;
+  text-align: center;
+}
+
+.empty {
+  display: flex;
+  justify-content: center; 
+  align-items: center;    
+  text-align: center;
+}
+
+.card {
+  position: relative; /* Essential for positioning the X */
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid #333;
+  transition: all 0.3s ease;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  color: #ff5555;
+  background-color: rgba(255, 85, 85, 0.1);
+}
+
+/* Ensure the rest of your card styles remain consistent */
+.cardHeader h4 {
+  margin: 0;
+  color: #fff;
+  font-size: larger;
 }

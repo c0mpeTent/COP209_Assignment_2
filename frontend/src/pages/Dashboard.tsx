@@ -10,8 +10,24 @@ const Dashboard: React.FC = () => {
   // const [projects, setProjects] = useState([]);
   // const [loading, setLoading] = useState(true);
   const [userName] = useState("User");
-  const [projects] = useState([]);
+  const [projects, setProjects] = useState([{id:"",name:"",description:""}]);
   const [loading] = useState(false);
+  const [newProjectName, setNewProjectName] = useState(""); // Track input value
+
+  const handleCreateProject = () => {
+    if (!newProjectName.trim()) return;
+
+    // Simulation of project creation
+    const newProject = {
+      id: Date.now().toString(),
+      name: newProjectName,
+      description: "A new project management board", // Required metadata 
+      // createdAt: new Date().toISOString(), // Required timestamp 
+    };
+
+    setProjects([...projects, newProject]);
+    setNewProjectName(""); // Clear input after creation
+  };
   // useEffect(() => {
   //   const fetchDashboardData = async () => {
   //     try {
@@ -49,26 +65,45 @@ const Dashboard: React.FC = () => {
 
   return (
     /* We remove the Container and Nav because Layout.tsx handles them now */
-    <div className={styles.dashboardContent}>
-      <nav>
+    <div className={styles.dashboardContainer}>
+      <nav className={styles.Hiuser}>
         <div className={styles.navActions}>
           <span>Hi, {userName}</span>
         </div>
       </nav>
       
-      <header className={styles.header}>
+      {/* <header className={styles.header}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>Your Projects</h1>
+    
           <p className={styles.subtitle}>Manage and track your active boards</p>
         </div>
-  
-        {/* This button is the "Primary Action" for this specific page */}
+
         <button 
           className={styles.createBtn} 
           onClick={() => alert("Open Modal")}
         >
           <span className={styles.plusIcon}>+</span> New Project
         </button>
+      </header> */}
+
+      <header className={styles.headercp}>
+        
+        {/* New Input Group for Quick Creation */}
+        <div className={styles.createGroup}>
+          <input 
+            type="text" 
+            placeholder="Enter project name..." 
+            className={styles.projectInput}
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+          />
+          <button 
+            className={styles.createBtn} 
+            onClick={handleCreateProject}
+          >
+            <span className={styles.plusIcon}>+</span> New Project
+          </button>
+        </div>
       </header>
   
       {/* The grid of projects */}
