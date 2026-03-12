@@ -24,7 +24,7 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ workflows, userRole, onAdd }
   return (
     <div className={styles.cardws}>
       <div className={styles.cardHeader}>
-        <h2>Workflows & Boards</h2>
+        <h2 className={styles.mainheading}>Workflows & Boards</h2>
         {canAddWorkflow && (
           <div className={styles.inputGroup}>
             <input type="text" placeholder="New board name..." id="wfInput" />

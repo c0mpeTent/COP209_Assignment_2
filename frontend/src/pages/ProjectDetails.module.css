@@ -47,3 +47,74 @@
   }
 }
 
+.descriptionBox {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.descHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.descHeader label {
+  color: #8993a4;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.editBtn {
+  background: transparent;
+  border: none;
+  color: #bb86fc;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.descText {
+  color: #dfe1e6;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.descInput {
+  width: 100%;
+  min-height: 100px;
+  background: #2c333a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #fff;
+  padding: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.editActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.saveBtn {
+  background: #0052cc;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background: transparent;
+  color: #dfe1e6;
+  border: 1px solid #444;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}

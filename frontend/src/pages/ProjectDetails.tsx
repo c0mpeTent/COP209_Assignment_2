@@ -4,12 +4,39 @@ import WorkflowSection from "../components/projectdetails/WorkflowSection";
 import TeamSection from "../components/projectdetails/TeamSection";
 import styles from "./ProjectDetails.module.css";
 
+interface ProjectMemberResponse {
+  role: string;
+  user: {
+    email: string;
+    name: string;
+  };
+}
+
+interface BoardResponse {
+  id: string;
+  name: string;
+}
+
+interface ProjectDataResponse {
+  project: {
+    id: string;
+    description: string | null;
+    members: ProjectMemberResponse[];
+    boards: BoardResponse[];
+  };
+}
+
+
+
 const ProjectDetails: React.FC = () => {
   // get the ID from the URL (e.g., /project/:id)
 
   const { id } = useParams<{ id: string }>();
 
   // state for the data
+  const [description, setDescription] = useState("Loading description...");
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [tempDesc, setTempDesc] = useState("");
   const [loading, setLoading] = useState(true);
   const [userRole] = useState("PROJECT_ADMIN"); // Mock role
   const [workflows, setWorkflows] = useState<string[]>([]);
@@ -21,19 +48,63 @@ const ProjectDetails: React.FC = () => {
   
   useEffect(() => {
     const loadProjectData = async () => {
-      // Simulating a network delay
-      setTimeout(() => {
-        setWorkflows(["Design System", "Mobile API", "Unit Testing"]);
-        setMembers([
-          { email: "owner@pro.com", role: "GLOBAL_ADMIN" },
-          { email: "manager@pro.com", role: "PROJECT_ADMIN" },
-          { email: "dev@pro.com", role: "PROJECT_MEMBER" },
-        ]);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include"
+        });
+    
+        if (response.ok) {
+          const data: ProjectDataResponse = await response.json(); // Explicit typing here
+          const project = data.project;
+    
+          // 1. Map workflows from the 'boards' array
+          const workflowNames = project.boards.map((b: BoardResponse) => b.name);
+          setWorkflows(workflowNames);
+    
+          // 2. Map members to extract nested user details [cite: 96]
+          const formattedMembers = project.members.map((m: ProjectMemberResponse) => ({
+            email: m.user.email,
+            role: m.role
+          }));
+          
+          setMembers(formattedMembers);
+          setDescription(project.description || "No description provided.");
+          setTempDesc(project.description || "");
+        }
+      } catch (error) {
+        console.error("Network error:", error);
+      } finally {
         setLoading(false);
-      }, 800);
+      }
     };
-    loadProjectData();
+  
+    if (id) {
+      loadProjectData();
+    }
   }, [id]);
+  
+  const handleUpdateDescription = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ description: tempDesc })
+      });
+  
+      if (response.ok) {
+        setDescription(tempDesc);
+        setIsEditingDesc(false);
+      } else {
+        const errorData = await response.json();
+        alert(`Update failed: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Error updating description:", error);
+    }
+  };
   
   // 2. The function that tests "Change Role"
   // const handleUpdateRole = (email: string, newRole: string) => {
@@ -112,20 +183,28 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
-  // 3. Add Member/Invite (POST Request)
+  
   const handleAddMember = async (email: string) => {
     try {
-      console.log(id);
       const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ projectId : id, memberEmail: email })
+        credentials: "include", // Required for HTTP-only cookies 
+        body: JSON.stringify({ 
+          projectId: id, 
+          memberEmail: email 
+        })
       });
-
+  
       if (response.ok) {
-        const addedMember = await response.json();
-        setMembers((prev) => [...prev, addedMember]);
+        const data = await response.json();
+        // Extract data based on your backend: res.status(200).json({ projectMember, user })
+        const newMember = { 
+          email: data.user.email, 
+          role: data.projectMember.role 
+        };
+        
+        setMembers((prev) => [...prev, newMember]);
       } else {
         const errorData = await response.json();
         alert(errorData.message || "Could not invite user.");
@@ -144,7 +223,32 @@ const ProjectDetails: React.FC = () => {
         <h1 className={styles.projectName}>Project Id : {id}</h1>
         <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
       </header>
+      <section className={styles.descriptionBox}>
+        <div className={styles.descHeader}>
+          <label>Project Description</label>
+          {(userRole === "GLOBAL_ADMIN" || userRole === "PROJECT_ADMIN") && !isEditingDesc && (
+            <button className={styles.editBtn} onClick={() => setIsEditingDesc(true)}>
+              ✎ Edit
+            </button>
+          )}
+        </div>
 
+        {isEditingDesc ? (
+          <div className={styles.editArea}>
+            <textarea
+              value={tempDesc}
+              onChange={(e) => setTempDesc(e.target.value)}
+              className={styles.descInput}
+            />
+            <div className={styles.editActions}>
+              <button onClick={handleUpdateDescription} className={styles.saveBtn}>Save</button>
+              <button onClick={() => { setIsEditingDesc(false); setTempDesc(description); }} className={styles.cancelBtn}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <p className={styles.descText}>{description}</p>
+        )}
+      </section>
       <div className={styles.layoutGrid}>
         {/* Left Column: Workflows */}
         <section className={styles.mainCol}>

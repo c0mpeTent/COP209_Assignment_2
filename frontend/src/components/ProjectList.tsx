@@ -24,6 +24,8 @@ const ProjectList: React.FC<ProjectListProps> = ({ items, onDelete }) => {
     }
   };
 
+  
+
   // 3. Navigation Handler
   const handleOpenProject = (id: string) => {
     navigate(`/project/${id}`); // Adjust this path to match your App.tsx Route path
