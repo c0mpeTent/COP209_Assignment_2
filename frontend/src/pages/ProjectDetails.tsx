@@ -19,6 +19,7 @@ interface BoardResponse {
 
 interface ProjectDataResponse {
   project: {
+    name: string;
     id: string;
     description: string | null;
     members: ProjectMemberResponse[];
@@ -34,6 +35,7 @@ const ProjectDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   // state for the data
+  const [projectName, setProjectName] = useState("P"); // New state
   const [description, setDescription] = useState("Loading description...");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [tempDesc, setTempDesc] = useState("");
@@ -60,6 +62,8 @@ const ProjectDetails: React.FC = () => {
           const project = data.project;
     
           // 1. Map workflows from the 'boards' array
+          console.log(project.name)
+          setProjectName(project.name); // Set the project name from API
           const workflowNames = project.boards.map((b: BoardResponse) => b.name);
           setWorkflows(workflowNames);
     
@@ -220,7 +224,7 @@ const ProjectDetails: React.FC = () => {
     <div className={styles.container}>
       {/* Header showing which project we are in */}
       <header className={styles.projectHeader}>
-        <h1 className={styles.projectName}>Project Id : {id}</h1>
+        <h1 className={styles.projectName}>Project Name : {projectName}</h1>
         <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
       </header>
       <section className={styles.descriptionBox}>

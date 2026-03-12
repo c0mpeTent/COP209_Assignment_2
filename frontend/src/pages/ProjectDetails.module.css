@@ -53,6 +53,8 @@
   border-radius: 8px;
   padding: 20px;
   margin: 20px 0;
+  margin-left: 20px;
+  width: 1075px;
 }
 
 .descHeader {
@@ -63,7 +65,7 @@
 }
 
 .descHeader label {
-  color: #8993a4;
+  color: #8a8a8a;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
