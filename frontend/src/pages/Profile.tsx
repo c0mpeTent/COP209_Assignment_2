@@ -20,7 +20,6 @@ const Profile: React.FC = () => {
       try {
         const response = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
             method: "GET",
-            headers: { "Content-Type": "application/json" },
             credentials: "include", // Include cookies for session management
           });
 
@@ -38,7 +37,7 @@ const Profile: React.FC = () => {
       }
     };
     fetchProfile();
-}); // Added missing dependency array to prevent infinite loop
+},[]); // Added missing dependency array to prevent infinite loop
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -53,21 +52,38 @@ const Profile: React.FC = () => {
 
     const formData = new FormData();
     formData.append("avatar", file);
-
+    console.log(formData);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/user/avatar`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/profile/update-avatar`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
         body: formData,
+        credentials: "include"
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser); // Update UI with new avatar URL 
+        const data = await response.json();
+        setUser(data.user); // Update UI with new avatar URL 
         setShowAvatarMenu(false);
       }
     } catch (err) {
       console.error("Upload failed", err);
+    }
+  };
+
+  const deleteAvatar = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/profile/delete-avatar`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user); // Update UI with no avatar
+        setShowAvatarMenu(false);
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
     }
   };
 
@@ -93,7 +109,7 @@ const Profile: React.FC = () => {
           {showAvatarMenu && (
             <div className={styles.avatarOverlay}>
               <button onClick={triggerFileSelect}>Change Photo</button>
-              <button className={styles.deleteBtn}>Delete Photo</button>
+              <button onClick={deleteAvatar} className={styles.deleteBtn}>Delete Photo</button>
             </div>
           )}
         </div>
