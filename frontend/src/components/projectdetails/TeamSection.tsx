@@ -38,7 +38,7 @@ const TeamSection: React.FC<TeamProps> = ({
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <h2>Project Team</h2>
+        <h2 className={styles.mainheading}>Project Team</h2>
         {canAddMembers && (
           <div className={styles.inputGroup}>
             <input 
