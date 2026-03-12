@@ -18,7 +18,7 @@ export const createProject = async (req: Request, res: Response) => {
         data:{
             projectId: project.id,
             userId: user.id,
-            role: "PROJECT_ADMIN"
+            role: "GLOBAL_ADMIN"
         }
     })
 
