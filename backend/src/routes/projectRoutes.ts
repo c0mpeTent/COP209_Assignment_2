@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { createProject , deleteProject , getProjects  ,addProjectMember , changeProjectMemberRole , deleteProjectMember } from "../controllers/projectController.js";
-
+import { createProject , deleteProject , getProjects  } from "../controllers/projectController.js";
+import { addProjectMember , changeProjectMemberRole , deleteProjectMember } from "../controllers/projectMemberController.js";
 const router = Router();
 
 // URL will be POST /api/project/create
