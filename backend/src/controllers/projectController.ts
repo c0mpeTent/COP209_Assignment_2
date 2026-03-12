@@ -93,6 +93,9 @@ export const addProjectMember = async ( req : Request, res : Response) => {
         const admin = (req as any ) .user;
         const memberEmail = req.body.memberEmail;
         const projectId = req.body.projectId;
+        console.log(admin);
+        console.log(memberEmail);
+        console.log(projectId);
         const member = await prisma.user.findUnique({
             where: {
                 email: memberEmail
@@ -115,9 +118,10 @@ export const addProjectMember = async ( req : Request, res : Response) => {
         if ( project.ownerId != admin.id ){
             return res.status(403).json({ message: "Forbidden" });
         }
-        if ( project.members.some((m) => m.id === member.id) ){
+        if ( project.members.some((m) => m.userId === member.id) ){
             return res.status(400).json({ message: "Member already exists" });
         }
+        console.log("point 1");
         const projectMember = await prisma.projectMember.create({
             data: {
                 projectId: projectId,

@@ -8,8 +8,8 @@ router.post("/create", createProject);
 router.get("/get", getProjects);
 router.delete("/delete/:projectId",deleteProject);
 router.post("/add-member",addProjectMember);
-router.post("/change-member-role",changeProjectMemberRole);
-router.post("/delete-member",deleteProjectMember);
+router.patch("/change-member-role",changeProjectMemberRole);
+router.delete("/delete-member",deleteProjectMember);
 
 
 export default router;
