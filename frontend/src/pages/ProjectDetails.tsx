@@ -6,8 +6,8 @@ import styles from "./ProjectDetails.module.css";
 
 const ProjectDetails: React.FC = () => {
   // get the ID from the URL (e.g., /project/:id)
+
   const { id } = useParams<{ id: string }>();
-  const { projectId } = useParams<{ projectId: string }>();
 
   // state for the data
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ const ProjectDetails: React.FC = () => {
 
   const handleUpdateRole = async (email: string, newRole: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/members`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/change-member-role`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -56,7 +56,7 @@ const ProjectDetails: React.FC = () => {
         },
         // CRITICAL: This allows the browser to send the HTTP-only cookie
         credentials: "include", 
-        body: JSON.stringify({ email, role: newRole })
+        body: JSON.stringify({ projectId : id , memberEmail : email, role: newRole })
       });
 
       if (response.ok) {
@@ -75,11 +75,11 @@ const ProjectDetails: React.FC = () => {
   // 1. Remove Member (DELETE Request)
   const handleRemoveMember = async (email: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/members`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-member`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Required for HTTP-only cookies
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ projectId : id , memberEmail: email })
       });
 
       if (response.ok) {
@@ -96,7 +96,7 @@ const ProjectDetails: React.FC = () => {
   // 2. Add Workflow/Board (POST Request)
   const handleAddWorkflow = async (name: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/workflows`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}/workflows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -115,11 +115,12 @@ const ProjectDetails: React.FC = () => {
   // 3. Add Member/Invite (POST Request)
   const handleAddMember = async (email: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/members`, {
+      console.log(id);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, role: "PROJECT_MEMBER" })
+        body: JSON.stringify({ projectId : id, memberEmail: email })
       });
 
       if (response.ok) {

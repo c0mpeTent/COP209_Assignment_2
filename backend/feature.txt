@@ -1,4 +1,4 @@
-"http://localhost:5000/api/auth/me
+"http://localhost:3000/api/auth/me
 Backend code for the GET /api/auth/me route
 profile.tsx <button className={styles.editBtn}>Edit Profile</button>
 <button className={styles.createBtn} onClick={() => alert("Open Modal")}>
