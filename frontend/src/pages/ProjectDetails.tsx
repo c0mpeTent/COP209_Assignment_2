@@ -49,7 +49,7 @@ const ProjectDetails: React.FC = () => {
   useEffect(() => {
     const loadProjectData = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"
@@ -87,11 +87,11 @@ const ProjectDetails: React.FC = () => {
   
   const handleUpdateDescription = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/set-project-description`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ description: tempDesc })
+        body: JSON.stringify({ projectId: id, description: tempDesc })
       });
   
       if (response.ok) {
