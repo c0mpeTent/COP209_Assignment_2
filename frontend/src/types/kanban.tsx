@@ -61,3 +61,17 @@ export interface AuditLog {
   newValue?: string;
   timestamp: string; 
 }
+
+export interface CreateTaskPayload {
+  title: string;           
+  description: string;     
+  type: "Story" | "Task" | "Bug";
+  priority: "Low" | "Medium" | "High" | "Critical"; 
+  status: string;         
+  dueDate?: string | null; 
+  parentId?: string | null; 
+  createdAt: string;       
+}
+
+
+

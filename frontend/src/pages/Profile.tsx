@@ -37,7 +37,7 @@ const Profile: React.FC = () => {
       }
     };
     fetchProfile();
-},[]); // Added missing dependency array to prevent infinite loop
+}); // Added missing dependency array to prevent infinite loop
 
   const handleLogout = () => {
     localStorage.removeItem("token");
