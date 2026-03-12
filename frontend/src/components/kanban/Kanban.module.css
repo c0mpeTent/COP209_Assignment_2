@@ -94,3 +94,16 @@
   50% { opacity: 0.7; }
   100% { opacity: 1; }
 }
+
+/* In KanbanColumn.module.css */
+.column {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  min-width: 300px; /* Essential: prevents columns from shrinking too much */
+  flex: 1;          /* Allows columns to grow equally to fill space */
+  max-width: 400px; /* Optional: prevents them from getting too wide on huge screens */
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  border: 1px solid #333;
+}

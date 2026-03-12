@@ -13,7 +13,7 @@ const DEFAULT_COLUMNS: ColumnData[] = [
 ];
 
 const WorkflowBoard: React.FC = () => {
-  const {  workflowName } = useParams();
+  const { projectId, workflowName } = useParams<{ projectId: string; workflowName: string }>();
   
   // 2. Initialize state directly. No useEffect needed for initial constants!
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
@@ -53,6 +53,7 @@ const WorkflowBoard: React.FC = () => {
     <div className={styles.boardWrapper}>
       <header className={styles.boardHeader}>
         <h1>{workflowName?.replace('-', ' ').toUpperCase()}</h1>
+        <h3>{projectId}</h3>
       </header>
 
       <div className={styles.kanbanContainer}>

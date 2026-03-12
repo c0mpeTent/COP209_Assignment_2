@@ -12,6 +12,7 @@ import Layout from './components/Layout';
 // Import your Pages
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import WorkflowBoard from './pages/WorkflowBoard';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // 'null' means "loading"
@@ -68,6 +69,18 @@ function App() {
             isAuthenticated ? (
               <Layout>
                 <ProjectDetails />
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          } 
+        />
+        <Route 
+          path="/project/:projectId/workflow/:workflowName" 
+          element={
+            isAuthenticated ? (
+              <Layout>
+                <WorkflowBoard />
               </Layout>
             ) : (
               <Navigate to="/auth" />

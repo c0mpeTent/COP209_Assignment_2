@@ -3,7 +3,7 @@
   gap: 20px;
   overflow-x: auto; /* Screen independent: scroll horizontally if columns don't fit */
   padding: 20px 0;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 10px);
   align-items: flex-start;
 }
 
@@ -11,4 +11,74 @@
   width: 100%;
   padding: 2rem;
   box-sizing: border-box;
+}
+
+.boardWrapper {
+  width: 1200px;
+  min-height: 100vh;
+  padding: 1.5rem 2rem;
+  background-color: #121212; /* Match your theme's dark background */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.boardHeader {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1rem;
+}
+
+.boardHeader h1 {
+  font-size: 1.8rem;
+  color: #bb86fc; /* Accent color */
+  margin: 0;
+}
+
+.boardHeader h3 {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+
+
+/* Custom Scrollbar for the board to keep it looking clean */
+.kanbanContainer::-webkit-scrollbar {
+  height: 8px;
+}
+
+.kanbanContainer::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.kanbanContainer::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.kanbanContainer::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* WorkflowBoard.module.css */
+.kanbanContainer {
+  display: flex;
+  gap: 20px;
+  width: 100%;           /* Ensure it takes full width of content area */
+  overflow-x: auto; /* Screen independent: scroll horizontally if columns don't fit */
+  padding: 20px 0;
+  padding-right: 20px;   /* Add a small padding so it doesn't touch the edge */
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+/* In your KhanbanColumn.module.css (or wherever the column is styled) */
+.column {
+  flex: 1;               /* This makes columns grow to fill the right margin */
+  min-width: 280px;      /* Prevents columns from becoming too thin */
+  max-width: 400px;      /* Optional: keeps them from becoming too wide */
+  background: #1e1e1e;
+  border-radius: 8px;
+  /* ... rest of your styles */
 }
