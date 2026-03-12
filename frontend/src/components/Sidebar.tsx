@@ -61,7 +61,7 @@ const Sidebar: React.FC = () => {
 
       <div className={styles.footer}>
         <button onClick={handleLogout} className={styles.logoutBtn}>
-          <span className={styles.icon}>🚪</span> Logout
+          <span className={styles.icon}></span> Logout
         </button>
       </div>
     </aside>

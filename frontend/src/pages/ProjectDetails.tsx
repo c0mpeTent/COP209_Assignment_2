@@ -7,6 +7,7 @@ import styles from "./ProjectDetails.module.css";
 interface ProjectMemberResponse {
   role: string;
   user: {
+    role: string;
     email: string;
     name: string;
   };
@@ -28,7 +29,6 @@ interface ProjectDataResponse {
 }
 
 
-
 const ProjectDetails: React.FC = () => {
   // get the ID from the URL (e.g., /project/:id)
 
@@ -36,19 +36,39 @@ const ProjectDetails: React.FC = () => {
 
   // state for the data
   const [projectName, setProjectName] = useState("P"); // New state
+  const [loggedInUserEmail, setLoggedInUserEmail] = useState("_");
   const [description, setDescription] = useState("Loading description...");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [tempDesc, setTempDesc] = useState("");
   const [loading, setLoading] = useState(true);
-  const [userRole] = useState("PROJECT_ADMIN"); // Mock role
+  //const [userRole] = useState("PROJECT_ADMIN"); // Mock role
   const [workflows, setWorkflows] = useState<string[]>([]);
   const [members, setMembers] = useState([
     { email: "owner@pro.com", role: "GLOBAL_ADMIN" },
     { email: "manager@pro.com", role: "PROJECT_ADMIN" },
     { email: "dev@pro.com", role: "PROJECT_MEMBER" },
   ]);
+  const [viewerRole, setViewerRole] = useState("POJECT_ADMIN");
   
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
+            method: "GET",
+            credentials: "include", // Include cookies for session management
+          });
+
+        if (response.ok) {
+          const data = await response.json();
+          setLoggedInUserEmail(data.user.email);
+        }
+      } catch (error) {
+        console.error("Profile Fetch Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
     const loadProjectData = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`, {
@@ -74,6 +94,13 @@ const ProjectDetails: React.FC = () => {
           }));
           
           setMembers(formattedMembers);
+         // Find the member entry
+          const currentMember = project.members.find(
+            (member) => member.user.email === loggedInUserEmail
+          );
+
+          // Assign role with a fallback to satisfy TypeScript
+          setViewerRole(currentMember?.role ?? "PROJECT_VIEWER");
           setDescription(project.description || "No description provided.");
           setTempDesc(project.description || "");
         }
@@ -87,7 +114,7 @@ const ProjectDetails: React.FC = () => {
     if (id) {
       loadProjectData();
     }
-  }, [id]);
+  });
   
   const handleUpdateDescription = async () => {
     try {
@@ -109,17 +136,7 @@ const ProjectDetails: React.FC = () => {
       console.error("Error updating description:", error);
     }
   };
-  
-  // 2. The function that tests "Change Role"
-  // const handleUpdateRole = (email: string, newRole: string) => {
-  //   setMembers((prevMembers) =>
-  //     prevMembers.map((m) => 
-  //       m.email === email ? { ...m, role: newRole } : m
-  //     )
-  //   );
-  //   console.log(`Updated ${email} to ${newRole}`);
-  // };
-  // Inside ProjectDetails.tsx
+
 
   const handleUpdateRole = async (email: string, newRole: string) => {
     try {
@@ -230,7 +247,7 @@ const ProjectDetails: React.FC = () => {
       <section className={styles.descriptionBox}>
         <div className={styles.descHeader}>
           <label>Project Description</label>
-          {(userRole === "GLOBAL_ADMIN" || userRole === "PROJECT_ADMIN") && !isEditingDesc && (
+          {(viewerRole === "GLOBAL_ADMIN" || viewerRole === "PROJECT_ADMIN") && !isEditingDesc && (
             <button className={styles.editBtn} onClick={() => setIsEditingDesc(true)}>
               ✎ Edit
             </button>
@@ -258,7 +275,7 @@ const ProjectDetails: React.FC = () => {
         <section className={styles.mainCol}>
           <WorkflowSection 
             workflows={workflows} 
-            userRole={userRole} 
+            userRole={viewerRole} 
             onAdd={handleAddWorkflow} 
           />
         </section>
@@ -267,7 +284,7 @@ const ProjectDetails: React.FC = () => {
         <aside className={styles.sideCol}>
         <TeamSection 
           members={members} 
-          userRole={userRole}//"GLOBAL_ADMIN"
+          userRole={viewerRole}//"GLOBAL_ADMIN"
           onAddMember={handleAddMember} // Pass the missing prop here
           onUpdateRole={handleUpdateRole}
           onRemoveMember={handleRemoveMember}
