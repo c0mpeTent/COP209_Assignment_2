@@ -197,6 +197,8 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
+  //const handleDeleteWorkflow = async (name: string) => {}
+
   
   const handleAddMember = async (email: string) => {
     try {

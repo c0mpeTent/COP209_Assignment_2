@@ -75,3 +75,46 @@ export interface CreateTaskPayload {
 
 
 
+export interface BoardFetchResponse {
+  id: string;
+  name: string;
+  // Mandatory: Role of the person currently viewing the board
+  userRole: "PROJECT_ADMIN" | "PROJECT_MEMBER" | "PROJECT_VIEWER" | "GLOBAL_ADMIN";
+  columns: {
+    id: string;
+    name: string;
+    wipLimit: number | null;
+    order: number;
+  }[];
+  tasks: Task[];
+}
+
+export interface CreateTaskPayload {
+  title: string;          
+  description: string;    
+  type: TaskType;         
+  priority: PriorityType;
+  assignee: string;       
+  
+  // MATCHING THE CONFLICTING DECLARATION:
+  // Use '?' and '| null' to satisfy ts(2687) and ts(2717)
+  dueDate?: string | null; // 
+  
+  parentId?: string | null; // For hierarchical linking 
+}
+
+export interface ColumnProps {
+  column: {
+    id: string;
+    title: string;
+    wipLimit: number;
+    tasks: Task[];
+  };
+  userRole: string;
+  onMoveTask: (taskId: string, sourceColId: string, targetColId: string) => void;
+  onRefresh: () => void;
+  // Logic Addition: Defined these in the interface
+  onCreateTask: (columnId: string, payload: CreateTaskPayload) => Promise<void>;
+  onDeleteTask: (taskId: string, columnId: string) => Promise<void>;
+}
+

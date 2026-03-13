@@ -17,18 +17,22 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, onClose, on
   const [type, setType] = useState<TaskType>("Task");
   const [priority, setPriority] = useState<PriorityType>("Medium");
   const [dueDate, setDueDate] = useState("");
+  const [assignee, setAssignee] = useState(""); // Add assignee state  //
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const payload = {
+    // Explicitly type the payload to catch missing properties
+    const payload: CreateTaskPayload = {
       title,
       description,
       type,
       priority,
-      status: columnId, // The task starts in the column where 'Create' was clicked
+      assignee, // Now included to satisfy TS
+      status: columnId,
       dueDate: dueDate || null,
-      createdAt: new Date().toISOString(), // Mandatory [cite: 151]
+      parentId: null, // Ensures Story/Task relationship compatibility
+      createdAt: new Date().toISOString() // Generates: "2026-03-13T16:01:45.000Z" 
     };
 
     onAdd(payload);
@@ -70,6 +74,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, onClose, on
               onChange={(e) => setDescription(e.target.value)} 
               rows={5}
             />
+          </div>
+          {/* Moved Assignee here: Full width below Description */}
+          <div className={styles.field}>
+            <label>Assignee</label>
+            <input 
+              type="text" 
+              value={assignee} 
+              onChange={(e) => setAssignee(e.target.value)} 
+              placeholder="User ID or Email"
+              required
+            />
+            
           </div>
 
           <div className={styles.row}>

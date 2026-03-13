@@ -1,21 +1,21 @@
-import React from "react";
-import styles from "./Kanban.module.css";
-
-interface Task {
-  id: string;
-  title: string;
-  priority: "Low" | "Medium" | "High" | "Critical"; 
-  type: "Story" | "Task" | "Bug"; 
-}
+import React from 'react';
+import type { Task } from '../../types/kanban'; // Ensure this matches your shared types file
+import styles from './TaskCard.module.css';
 
 interface TaskCardProps {
   task: Task;
   columnId: string;
+  onDelete: () => Promise<void>;
+  userRole?: string; // Optional: to hide delete button for viewers
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, columnId }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, userRole }) => {
+  
+  // RBAC: Only Admins and Members can delete tasks
+  const canModify = userRole !== "PROJECT_VIEWER";
+
   const handleDragStart = (e: React.DragEvent) => {
-    // 1. Store Task ID and Source Column ID in the dataTransfer object [cite: 51]
+    // Required for Native DnD to identify the task and its origin
     e.dataTransfer.setData("taskId", task.id);
     e.dataTransfer.setData("sourceColId", columnId);
     e.dataTransfer.effectAllowed = "move";
@@ -23,14 +23,49 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId }) => {
 
   return (
     <div 
-      className={`${styles.taskCard} ${styles[task.priority.toLowerCase()]}`}
-      draggable // 2. Mandatory attribute for native DnD 
+      className={`${styles.card} ${styles[`priority-${task.priority.toLowerCase()}`]}`}
+      draggable={canModify} // Disable dragging for viewers
       onDragStart={handleDragStart}
     >
-      <div className={styles.taskTypeTag}>{task.type}</div>
-      <h4 className={styles.taskTitle}>{task.title}</h4>
-      <div className={styles.taskFooter}>
-        <span className={styles.priorityLabel}>Priority: {task.priority}</span>
+      <div className={styles.cardHeader}>
+        {/* Dynamic class based on Task Type (Story, Task, Bug) */}
+        <span className={`${styles.typeBadge} ${styles[task.type.toLowerCase()]}`}>
+          {task.type}
+        </span>
+        
+        {canModify && (
+          <button 
+            className={styles.deleteBtn} 
+            title="Delete Task"
+            onClick={(e) => {
+              e.stopPropagation(); // Stops the event from bubbling to the card itself
+              onDelete();
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      
+      <h4 className={styles.title}>{task.title}</h4>
+      
+      {task.description && (
+        <p className={styles.descriptionSnippet}>
+          {task.description.substring(0, 60)}{task.description.length > 60 ? '...' : ''}
+        </p>
+      )}
+      
+      <div className={styles.cardFooter}>
+        <div className={styles.footerLeft}>
+          <span className={`${styles.priorityIndicator} ${styles[task.priority.toLowerCase()]}`} />
+          <span className={styles.priorityText}>{task.priority}</span>
+        </div>
+        
+        {task.assignee && (
+          <div className={styles.assigneeWrapper} title={`Assigned to ${task.assignee}`}>
+            <span className={styles.avatar}>👤</span>
+          </div>
+        )}
       </div>
     </div>
   );
