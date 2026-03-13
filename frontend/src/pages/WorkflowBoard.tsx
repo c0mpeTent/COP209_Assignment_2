@@ -23,7 +23,7 @@ const WorkflowBoard: React.FC = () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/boards/${workflowName}`, 
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-workflow/${projectId}/${workflowName}`, 
         { credentials: "include" }
       );
 
