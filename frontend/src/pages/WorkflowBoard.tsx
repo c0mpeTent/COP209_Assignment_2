@@ -17,7 +17,7 @@ const WorkflowBoard: React.FC = () => {
   // 1. Add a loading state
   const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
-  const [viewerRole, setViewerRole] = useState("PROJECT_VIEWER");
+  const [viewerRole, setViewerRole] = useState("GLOBAL_ADMIN");
 
   const fetchBoardData = useCallback(async () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
