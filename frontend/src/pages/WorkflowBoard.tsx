@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import KanbanColumn from "../components/kanban/KhanbanColumn";
-import type { ColumnData, Task } from "../types/kanban"; // Recommended to keep types modular
-import styles from "./WorkflowBoard.module.css";
-
+import type { ColumnData, Task, BoardFetchResponse, CreateTaskPayload } from "../types/kanban"; // Recommended to keep types modular
+import styles from "./WorkflowBoard.module.css"; 
 // 1. Move static data outside the component to prevent recreation on every render
 const DEFAULT_COLUMNS: ColumnData[] = [
   { id: "todo", title: "To Do", wipLimit: 5, tasks: [] },
@@ -15,8 +14,50 @@ const DEFAULT_COLUMNS: ColumnData[] = [
 const WorkflowBoard: React.FC = () => {
   const { projectId, workflowName } = useParams<{ projectId: string; workflowName: string }>();
   
-  // 2. Initialize state directly. No useEffect needed for initial constants!
+  // 1. Add a loading state
+  const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
+  const [viewerRole, setViewerRole] = useState("PROJECT_VIEWER");
+
+  const fetchBoardData = useCallback(async () => {
+    // Only set loading if it's not already true (prevents flicker on refresh)
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/boards/${workflowName}`, 
+        { credentials: "include" }
+      );
+
+      if (response.ok) {
+        const data: BoardFetchResponse = await response.json();
+        
+        // Batch these updates
+        setViewerRole(data.userRole || "PROJECT_VIEWER");
+        const initializedColumns: ColumnData[] = data.columns
+          .sort((a, b) => a.order - b.order)
+          .map(col => ({
+            id: col.id,
+            title: col.name,
+            wipLimit: col.wipLimit ?? 0,
+            tasks: data.tasks.filter(task => task.status === col.name) 
+          }));
+
+        setColumns(initializedColumns);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false); // End loading state
+    }
+  }, [projectId, workflowName]);
+
+  useEffect(() => {
+    fetchBoardData();
+  }, [fetchBoardData]);
+
+  // 2. Conditional return to prevent cascading render of the board
+  if (loading) {
+    return <div className={styles.loading}>Loading Board...</div>;
+  }
 
   const handleMoveTask = (taskId: string, sourceColId: string, targetColId: string) => {
     // WIP Limit Logic remains the same
@@ -48,7 +89,64 @@ const WorkflowBoard: React.FC = () => {
       });
     });
   };
+  
+  // 1. Create Task Function
+  const handleCreateTask = async (columnId: string, payload: CreateTaskPayload) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          ...payload, 
+          status: columnId // Backend uses column status for placement [cite: 127]
+        })
+      });
 
+      if (response.ok) {
+        const newTask = await response.json();
+        
+        // Update local state to show the new task in the correct column
+        setColumns(prev => prev.map(col => {
+          if (col.id === columnId) {
+            return { ...col, tasks: [...col.tasks, newTask] };
+          }
+          return col;
+        }));
+      } else {
+        const error = await response.json();
+        alert(`Failed to create task: ${error.message}`);
+      }
+    } catch (err) {
+      console.error("Task creation error:", err);
+    }
+  };
+
+  // 2. Delete Task Function
+  const handleDeleteTask = async (taskId: string, columnId: string) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks/${taskId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        // Remove task from local state
+        setColumns(prev => prev.map(col => {
+          if (col.id === columnId) {
+            return { ...col, tasks: col.tasks.filter(t => t.id !== taskId) };
+          }
+          return col;
+        }));
+      } else {
+        alert("Failed to delete task.");
+      }
+    } catch (err) {
+      console.error("Task deletion error:", err);
+    }
+  };
   return (
     <div className={styles.boardWrapper}>
       <header className={styles.boardHeader}>
@@ -61,7 +159,14 @@ const WorkflowBoard: React.FC = () => {
           <KanbanColumn 
             key={col.id}
             column={col}
+            // NEW: Pass the userRole state from your parent
+            userRole={viewerRole} 
+            // NEW: Pass a function to re-fetch the board data
+            onRefresh={fetchBoardData} 
             onMoveTask={handleMoveTask}
+            // FIX: Explicitly type the payload to fix ts(2345)
+            onCreateTask={(columnId: string, payload: CreateTaskPayload) => handleCreateTask(columnId, payload)} 
+            onDeleteTask={(taskId: string, columnId: string) => handleDeleteTask(taskId, columnId)}
           />
         ))}
       </div>

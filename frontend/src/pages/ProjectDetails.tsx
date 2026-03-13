@@ -188,11 +188,11 @@ const ProjectDetails: React.FC = () => {
   // 2. Add Workflow/Board (POST Request)
   const handleAddWorkflow = async (name: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${id}/workflows`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-workflow`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ projectId: id, workflowname: name })
       });
 
       if (response.ok) {
@@ -203,6 +203,8 @@ const ProjectDetails: React.FC = () => {
       console.error("Failed to add workflow:", error);
     }
   };
+
+  //const handleDeleteWorkflow = async (name: string) => {}
 
   
   const handleAddMember = async (email: string) => {
