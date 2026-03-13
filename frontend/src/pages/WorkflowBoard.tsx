@@ -12,18 +12,21 @@ const DEFAULT_COLUMNS: ColumnData[] = [
 ];
 
 const WorkflowBoard: React.FC = () => {
-  const { projectId, workflowName } = useParams<{ projectId: string; workflowName: string }>();
+  const { projectId, workflowId } = useParams<{ projectId: string; workflowId : string }>();
   
   // 1. Add a loading state
   const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
   const [viewerRole, setViewerRole] = useState("GLOBAL_ADMIN");
+  const [workflowName, setWorkflowName] = useState("NOTKNOWN")
   const [boardId, setboardId] = useState("notdefined");
+
+
   const fetchBoardData = useCallback(async () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/boards/${workflowName}`, 
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/boards/${workflowId}`, 
         { credentials: "include" }
       );
 
@@ -33,6 +36,7 @@ const WorkflowBoard: React.FC = () => {
         // Batch these updates
         setViewerRole(data.userRole || "PROJECT_VIEWER");
         setboardId(data.id)
+        setWorkflowName(data.name)
         const initializedColumns: ColumnData[] = data.columns
           .sort((a, b) => a.order - b.order)
           .map(col => ({
@@ -49,7 +53,7 @@ const WorkflowBoard: React.FC = () => {
     } finally {
       setLoading(false); // End loading state
     }
-  }, [projectId, workflowName]);
+  }, [projectId, workflowId]);
 
   useEffect(() => {
     fetchBoardData();
@@ -102,7 +106,7 @@ const WorkflowBoard: React.FC = () => {
         credentials: "include",
         body: JSON.stringify({
           ...payload,
-          workflowId: workflowName, // Backend: const workflowId = req.body.workflowId;
+          workflowId: boardId, // Backend: const workflowId = req.body.workflowId;
           status: columnId          // Backend: const taskStatus = req.body.status;
         })
       });

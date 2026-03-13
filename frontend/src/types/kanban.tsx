@@ -119,3 +119,8 @@ export interface ColumnProps {
   onDeleteTask: (taskId: string, columnId: string) => Promise<void>;
 }
 
+export interface Board {
+  id : string;
+  name : string;
+  projectId : string;
+}
