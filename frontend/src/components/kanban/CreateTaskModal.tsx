@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import styles from "./Modal.module.css";
+//import { useParams } from "react-router-dom";
 import type {CreateTaskPayload} from "../../types/kanban";
 type TaskType = "Story" | "Task" | "Bug";
 type PriorityType = "Low" | "Medium" | "High" | "Critical";
 
 interface CreateTaskModalProps {
   columnId: string;
+  boardId: string;
   onClose: () => void;
   // onAdd handles the API submission in the parent component
   onAdd: (payload: CreateTaskPayload) => void; 
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, onClose, onAdd }) => {
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, onClose, onAdd }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<TaskType>("Task");
@@ -24,15 +26,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, onClose, on
     
     // Explicitly type the payload to catch missing properties
     const payload: CreateTaskPayload = {
-      title,
+      workflowId:  boardId || "", // Or however you identify the board ID
+      title: title,                   // map title state to 'name'
       description,
       type,
       priority,
-      assignee, // Now included to satisfy TS
       status: columnId,
       dueDate: dueDate || null,
-      parentId: null, // Ensures Story/Task relationship compatibility
-      createdAt: new Date().toISOString() // Generates: "2026-03-13T16:01:45.000Z" 
+      parentStoryId: null,           // map to parentStoryId
+      assignee, 
+      createdAt: new Date().toISOString() // FIX: Added to resolve ts(2739)
     };
 
     onAdd(payload);

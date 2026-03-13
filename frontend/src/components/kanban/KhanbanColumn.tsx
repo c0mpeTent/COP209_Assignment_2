@@ -9,7 +9,8 @@ import type { CreateTaskPayload, ColumnProps } from "../../types/kanban";
 
 const KanbanColumn: React.FC<ColumnProps> = ({ 
   column, 
-  userRole, 
+  userRole,
+  boardId, 
   onMoveTask, 
   onRefresh, 
   onCreateTask, // Destructured
@@ -133,6 +134,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
       {isModalOpen && (
         <CreateTaskModal 
           columnId={column.id} 
+          boardId={boardId}
           onClose={() => setIsModalOpen(false)} 
           onAdd={handleCreateTaskInternal} // Call the wrapper
         />
