@@ -1,0 +1,102 @@
+.card {
+  background-color: white; /* Light card on dark background */
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  border-left: 4px solid transparent;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.card:hover {
+  background-color: #f4f5f7;
+  transform: translateY(-2px);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 14px;
+  color: #172b4d;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.descriptionSnippet {
+  font-size: 12px;
+  color: #5e6c84;
+  margin-bottom: 12px;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #8993a4;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.deleteBtn:hover {
+  background-color: #ffebe6;
+  color: #de350b;
+}
+
+/* Priority Border Classes - Matching your Dynamic Class Logic */
+.priority-critical { border-left-color: #ff4d4d; }
+.priority-high { border-left-color: #ffa500; }
+.priority-medium { border-left-color: #007bff; }
+.priority-low { border-left-color: #28a745; }
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.priorityIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Priority circle dots */
+.critical { background-color: #ff4d4d; }
+.high { background-color: #ffa500; }
+.medium { background-color: #007bff; }
+.low { background-color: #28a745; }
+
+.priorityText {
+  font-size: 11px;
+  color: #5e6c84;
+  text-transform: capitalize;
+}
+
+.typeBadge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #6b778c;
+  background: #ebecf0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.assigneeWrapper {
+  font-size: 1.1rem;
+}

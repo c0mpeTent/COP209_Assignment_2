@@ -5,7 +5,7 @@ import fs from "fs";
 
 export const updateAvatar = async ( req : Request , res : Response) => {
   try {
-    if (!req.file){
+    if (!(req as any).file){
         return res.status(400).json({ error: "No file uploaded" });
     }
     const user = (req as any).user;
@@ -21,7 +21,7 @@ export const updateAvatar = async ( req : Request , res : Response) => {
         }
     }
 
-    const fullAvatarUrl = `${process.env.BACKEND_ORIGIN}/uploads/${req.file.filename}`;
+    const fullAvatarUrl = `${process.env.BACKEND_ORIGIN}/uploads/${(req as any).file.filename}`;
 
     const updatedUser = await prisma.user.update({
         where: { id},
