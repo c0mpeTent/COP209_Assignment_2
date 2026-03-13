@@ -90,17 +90,17 @@ export interface BoardFetchResponse {
 }
 
 export interface CreateTaskPayload {
-  title: string;          
-  description: string;    
-  type: TaskType;         
+  workflowId: string;     // Added: backend needs this to find the board
+  name: string;           // Changed from title -> name
+  description: string;
+  type: TaskType;
   priority: PriorityType;
-  assignee: string;       
-  
-  // MATCHING THE CONFLICTING DECLARATION:
-  // Use '?' and '| null' to satisfy ts(2687) and ts(2717)
-  dueDate?: string | null; // 
-  
-  parentId?: string | null; // For hierarchical linking 
+  status: string;         // The column title/id
+  dueDate?: string | null;
+  parentStoryId?: string | null; // Changed from parentId -> parentStoryId
+  // Note: Assignee is current ignored by your backend (assigneeId: ""), 
+  // but keep it if you plan to update backend later.
+  assignee: string; 
 }
 
 export interface ColumnProps {
@@ -110,6 +110,7 @@ export interface ColumnProps {
     wipLimit: number;
     tasks: Task[];
   };
+  boardId: string;
   userRole: string;
   onMoveTask: (taskId: string, sourceColId: string, targetColId: string) => void;
   onRefresh: () => void;

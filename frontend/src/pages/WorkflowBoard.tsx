@@ -18,7 +18,7 @@ const WorkflowBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
   const [viewerRole, setViewerRole] = useState("GLOBAL_ADMIN");
-
+  const [boardId, setboardId] = useState("notdefined");
   const fetchBoardData = useCallback(async () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
     try {
@@ -32,6 +32,7 @@ const WorkflowBoard: React.FC = () => {
         
         // Batch these updates
         setViewerRole(data.userRole || "PROJECT_VIEWER");
+        setboardId(data.id)
         const initializedColumns: ColumnData[] = data.columns
           .sort((a, b) => a.order - b.order)
           .map(col => ({
@@ -90,33 +91,31 @@ const WorkflowBoard: React.FC = () => {
     });
   };
   
-  // 1. Create Task Function
   const handleCreateTask = async (columnId: string, payload: CreateTaskPayload) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-task`, {
+      // IMPORTANT: Your backend req.body.workflowId must be the UUID of the board.
+      // If 'workflowName' from URL is the ID, use it. If not, use col.boardId.
+      
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ 
-          ...payload, 
-          projectId: projectId,
-          status: columnId // Backend uses column status for placement [cite: 127]
+        body: JSON.stringify({
+          ...payload,
+          workflowId: workflowName, // Backend: const workflowId = req.body.workflowId;
+          status: columnId          // Backend: const taskStatus = req.body.status;
         })
       });
-
+  
       if (response.ok) {
         const newTask = await response.json();
-        
-        // Update local state to show the new task in the correct column
+        // Update local state...
         setColumns(prev => prev.map(col => {
           if (col.id === columnId) {
             return { ...col, tasks: [...col.tasks, newTask] };
           }
           return col;
         }));
-      } else {
-        const error = await response.json();
-        alert(`Failed to create task: ${error.message}`);
       }
     } catch (err) {
       console.error("Task creation error:", err);
@@ -160,6 +159,7 @@ const WorkflowBoard: React.FC = () => {
           <KanbanColumn 
             key={col.id}
             column={col}
+            boardId={boardId}
             // NEW: Pass the userRole state from your parent
             userRole={viewerRole} 
             // NEW: Pass a function to re-fetch the board data

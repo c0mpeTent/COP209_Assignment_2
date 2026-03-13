@@ -36,7 +36,7 @@ const ProjectDetails: React.FC = () => {
 
   // state for the data
   const [projectName, setProjectName] = useState("P"); // New state
-  const [loggedInUserEmail, setLoggedInUserEmail] = useState("_");
+  //const [loggedInUserEmail, setLoggedInUserEmail] = useState("_");
   const [description, setDescription] = useState("Loading description...");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [tempDesc, setTempDesc] = useState("");
@@ -63,7 +63,7 @@ const ProjectDetails: React.FC = () => {
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
         userEmail = profileData.user.email;
-        setLoggedInUserEmail(userEmail);
+        //setLoggedInUserEmail(userEmail);
       }
 
       // 2. Then fetch project data
@@ -280,6 +280,7 @@ const ProjectDetails: React.FC = () => {
         <TeamSection 
           members={members} 
           userRole={viewerRole}//"GLOBAL_ADMIN"
+          //currentUserEmail={loggedInUserEmail} // Use the variable here
           onAddMember={handleAddMember} // Pass the missing prop here
           onUpdateRole={handleUpdateRole}
           onRemoveMember={handleRemoveMember}
