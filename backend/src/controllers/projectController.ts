@@ -128,7 +128,7 @@ export const setProjectDescription = async ( req : Request , res : Response) => 
         if (!projectMember) {
             return res.status(403).json({ message: "Forbidden" });
         }
-        if (projectMember.role == "PROJECT_MEMBER") {
+        if (projectMember.role == "PROJECT_MEMBER" || projectMember.role == "PROJECT_VIEWER") {
             return res.status(403).json({ message: "Forbidden" });
         }
         const project = await prisma.project.update({
