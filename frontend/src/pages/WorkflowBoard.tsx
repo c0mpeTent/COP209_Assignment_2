@@ -5,10 +5,10 @@ import type { ColumnData, Task, BoardFetchResponse, CreateTaskPayload } from "..
 import styles from "./WorkflowBoard.module.css"; 
 // 1. Move static data outside the component to prevent recreation on every render
 const DEFAULT_COLUMNS: ColumnData[] = [
-  { id: "todo", title: "To Do", wipLimit: 5, tasks: [] },
-  { id: "inprogress", title: "In Progress", wipLimit: 3, tasks: [] },
-  { id: "review", title: "Review", wipLimit: 3, tasks: [] },
-  { id: "done", title: "Done", wipLimit: 10, tasks: [] },
+  { id: "todo", title: "To Do", wipLimit: 5, order: 1 ,tasks: [] },
+  { id: "inprogress", title: "In Progress", wipLimit: 3,order: 2 , tasks: [] },
+  { id: "review", title: "Review", wipLimit: 3, order: 3, tasks: [] },
+  { id: "done", title: "Done", wipLimit: 10, order: 4, tasks: [] },
 ];
 
 const WorkflowBoard: React.FC = () => {
@@ -23,7 +23,7 @@ const WorkflowBoard: React.FC = () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-workflow/${projectId}/${workflowName}`, 
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-workflow/${projectId}/${boardId}`, 
         { credentials: "include" }
       );
 
@@ -38,6 +38,7 @@ const WorkflowBoard: React.FC = () => {
           .map(col => ({
             id: col.id,
             title: col.name,
+            order: col.order,
             wipLimit: col.wipLimit ?? 0,
             tasks: data.tasks.filter(task => task.status === col.name) 
           }));
@@ -96,13 +97,13 @@ const WorkflowBoard: React.FC = () => {
       // IMPORTANT: Your backend req.body.workflowId must be the UUID of the board.
       // If 'workflowName' from URL is the ID, use it. If not, use col.boardId.
       
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/add-task`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           ...payload,
-          workflowId: workflowName, // Backend: const workflowId = req.body.workflowId;
+          workflowId:boardId, // Backend: const workflowId = req.body.workflowId;
           status: columnId          // Backend: const taskStatus = req.body.status;
         })
       });
@@ -127,7 +128,7 @@ const WorkflowBoard: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks/${taskId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-task/${boardId}/${taskId}`, {
         method: "DELETE",
         credentials: "include"
       });

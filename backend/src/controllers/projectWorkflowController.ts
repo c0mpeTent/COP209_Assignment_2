@@ -214,3 +214,54 @@ export const changeTask = async (req : Request, res : Response) => {
         res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export const addColumn = async (req : Request, res : Response) => {
+    try {
+        const user = (req as any).user ;
+        const title: string = req.body.title;
+        const order: number = req.body.order;
+        const wipLimit: number = req.body.wipLimit;
+        const workflowId = req.params.workflowId;
+        if (!workflowId || typeof workflowId !== 'string') {
+            return res.status(400).json({ message: "Workflow ID is required" });
+        }
+        const workflow = await prisma.board.findUnique({
+            where:{
+                id : workflowId
+            }
+        });
+        if (!workflow) {
+            return res.status(404).json({ message: "Workflow not found" });
+        }
+        const project = await prisma.project.findUnique({
+            where:{
+                id : workflow.projectId
+            },
+            include:{
+                members: true
+            }
+        });
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+        const userRole = project.members.find((member) => member.userId === user.id)?.role;
+        if (!userRole) {
+            return res.status(403).json({ message: "User does not have permission to add column" });
+        }
+        if (userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
+            return res.status(403).json({ message: "User does not have permission to add column" });
+        }
+        const newColumn = prisma.column.create({
+            data:{
+                name : title,
+                order : order,
+                wipLimit : wipLimit,
+                boardId : workflowId
+            }
+        });
+        return res.status(200).json(newColumn);
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+

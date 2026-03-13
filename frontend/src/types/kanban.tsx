@@ -47,6 +47,7 @@ export interface Task {
 export type ColumnData = {
   id: string; // Internal status identifier (e.g., "todo") 
   title: string; // Display name (e.g., "To Do") 
+  order: number; // For reordering columns [cite: 111]
   wipLimit: number; // Mandatory WIP limit enforcement 
   tasks: Task[]; 
 }
@@ -107,6 +108,7 @@ export interface ColumnProps {
   column: {
     id: string;
     title: string;
+    order: number;
     wipLimit: number;
     tasks: Task[];
   };
