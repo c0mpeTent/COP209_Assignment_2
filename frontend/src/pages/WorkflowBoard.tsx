@@ -93,12 +93,13 @@ const WorkflowBoard: React.FC = () => {
   // 1. Create Task Function
   const handleCreateTask = async (columnId: string, payload: CreateTaskPayload) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-task`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ 
           ...payload, 
+          projectId: projectId,
           status: columnId // Backend uses column status for placement [cite: 127]
         })
       });

@@ -51,70 +51,63 @@ const ProjectDetails: React.FC = () => {
   const [viewerRole, setViewerRole] = useState("POJECT_ADMIN");
   
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
-            method: "GET",
-            credentials: "include", // Include cookies for session management
-          });
+  const loadAllData = async () => {
+    try {
+      // 1. Fetch user profile first
+      const profileResponse = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setLoggedInUserEmail(data.user.email);
-        }
-      } catch (error) {
-        console.error("Profile Fetch Error:", error);
-      } finally {
-        setLoading(false);
+      let userEmail = "_";
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        userEmail = profileData.user.email;
+        setLoggedInUserEmail(userEmail);
       }
-    };
-    fetchProfile();
-    const loadProjectData = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`, {
+
+      // 2. Then fetch project data
+      if (id) {
+        const projectResponse = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"
         });
-    
-        if (response.ok) {
-          const data: ProjectDataResponse = await response.json(); // Explicit typing here
+        
+        if (projectResponse.ok) {
+          const data: ProjectDataResponse = await projectResponse.json();
           const project = data.project;
-    
-          // 1. Map workflows from the 'boards' array
-          console.log(project.name)
-          setProjectName(project.name); // Set the project name from API
+          
+          setProjectName(project.name);
           const workflowNames = project.boards.map((b: BoardResponse) => b.name);
           setWorkflows(workflowNames);
-    
-          // 2. Map members to extract nested user details [cite: 96]
+          
           const formattedMembers = project.members.map((m: ProjectMemberResponse) => ({
             email: m.user.email,
             role: m.role
           }));
           
           setMembers(formattedMembers);
-         // Find the member entry
+          
+          // Now loggedInUserEmail is properly set
           const currentMember = project.members.find(
-            (member) => member.user.email === loggedInUserEmail
+            (member) => member.user.email === userEmail
           );
-
-          // Assign role with a fallback to satisfy TypeScript
+          
           setViewerRole(currentMember?.role ?? "PROJECT_VIEWER");
           setDescription(project.description || "No description provided.");
           setTempDesc(project.description || "");
         }
-      } catch (error) {
-        console.error("Network error:", error);
-      } finally {
-        setLoading(false);
       }
-    };
-  
-    if (id) {
-      loadProjectData();
+    } catch (error) {
+      console.error("Data loading error:", error);
+    } finally {
+      setLoading(false);
     }
-  });
+  };
+
+  loadAllData();
+}, [id]); // Add id as dependency
   
   const handleUpdateDescription = async () => {
     try {
@@ -192,7 +185,7 @@ const ProjectDetails: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ projectId: id, workflowname: name })
+        body: JSON.stringify({ name , projectId : id })
       });
 
       if (response.ok) {
