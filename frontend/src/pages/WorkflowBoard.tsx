@@ -17,7 +17,7 @@ const WorkflowBoard: React.FC = () => {
   // 1. Add a loading state
   const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<ColumnData[]>(DEFAULT_COLUMNS);
-  const [viewerRole, setViewerRole] = useState("PROJECT_VIEWER");
+  const [viewerRole, setViewerRole] = useState("GLOBAL_ADMIN");
 
   const fetchBoardData = useCallback(async () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
@@ -93,12 +93,13 @@ const WorkflowBoard: React.FC = () => {
   // 1. Create Task Function
   const handleCreateTask = async (columnId: string, payload: CreateTaskPayload) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-task`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ 
           ...payload, 
+          projectId: projectId,
           status: columnId // Backend uses column status for placement [cite: 127]
         })
       });
