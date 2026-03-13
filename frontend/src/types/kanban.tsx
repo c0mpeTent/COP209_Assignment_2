@@ -91,7 +91,7 @@ export interface BoardFetchResponse {
 
 export interface CreateTaskPayload {
   workflowId: string;     // Added: backend needs this to find the board
-  name: string;           // Changed from title -> name
+  title: string;           // Changed from title -> name
   description: string;
   type: TaskType;
   priority: PriorityType;

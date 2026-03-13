@@ -27,7 +27,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, on
     // Explicitly type the payload to catch missing properties
     const payload: CreateTaskPayload = {
       workflowId:  boardId || "", // Or however you identify the board ID
-      name: title,                   // map title state to 'name'
+      title: title,                   // map title state to 'name'
       description,
       type,
       priority,
@@ -35,6 +35,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, on
       dueDate: dueDate || null,
       parentStoryId: null,           // map to parentStoryId
       assignee, 
+      createdAt: new Date().toISOString() // FIX: Added to resolve ts(2739)
     };
 
     onAdd(payload);
