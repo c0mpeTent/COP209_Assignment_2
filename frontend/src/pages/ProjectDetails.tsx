@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import WorkflowSection from "../components/projectdetails/WorkflowSection";
 import TeamSection from "../components/projectdetails/TeamSection";
 import styles from "./ProjectDetails.module.css";
+import type {Board} from "../types/kanban"
 
 interface ProjectMemberResponse {
   role: string;
@@ -16,6 +17,7 @@ interface ProjectMemberResponse {
 interface BoardResponse {
   id: string;
   name: string;
+  projectId : string;
 }
 
 interface ProjectDataResponse {
@@ -43,6 +45,7 @@ const ProjectDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   //const [userRole] = useState("PROJECT_ADMIN"); // Mock role
   const [workflows, setWorkflows] = useState<string[]>([]);
+  const [boards, setBoards] = useState<Board[]>([]);
   const [members, setMembers] = useState([
     { email: "owner@pro.com", role: "GLOBAL_ADMIN" },
     { email: "manager@pro.com", role: "PROJECT_ADMIN" },
@@ -81,6 +84,7 @@ const ProjectDetails: React.FC = () => {
           setProjectName(project.name);
           const workflowNames = project.boards.map((b: BoardResponse) => b.name);
           setWorkflows(workflowNames);
+          setBoards(project.boards);
           
           const formattedMembers = project.members.map((m: ProjectMemberResponse) => ({
             email: m.user.email,
@@ -191,6 +195,7 @@ const ProjectDetails: React.FC = () => {
       if (response.ok) {
         const newWorkflow = await response.json();
         setWorkflows((prev) => [...prev, newWorkflow.name]);
+        setBoards((prev) => [...prev, newWorkflow]);
       }
     } catch (error) {
       console.error("Failed to add workflow:", error);
@@ -269,8 +274,9 @@ const ProjectDetails: React.FC = () => {
         {/* Left Column: Workflows */}
         <section className={styles.mainCol}>
           <WorkflowSection 
-            workflows={workflows} 
+            //workflows={workflows} 
             userRole={viewerRole} 
+            boards={boards}
             onAdd={handleAddWorkflow} 
           />
         </section>

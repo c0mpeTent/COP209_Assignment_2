@@ -76,7 +76,7 @@ function App() {
           } 
         />
         <Route 
-          path="/project/:projectId/workflow/:workflowName" 
+          path="/project/:projectId/workflow/:workflowId" 
           element={
             isAuthenticated ? (
               <Layout>

@@ -6,13 +6,13 @@
 /**
  * Priority levels for tasks
  */
-export type PriorityType = "Low" | "Medium" | "High" | "Critical";
+export type PriorityType = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 /**
  * Hierarchical Task Types
  * Stories are parents; Tasks and Bugs are children
  */
-export type TaskType = "Story" | "Task" | "Bug";
+export type TaskType = "STORY" | "TASK" | "BUG";
 
 /**
  * Project-Level Roles for RBAC[cite: 88].
@@ -66,8 +66,8 @@ export interface AuditLog {
 export interface CreateTaskPayload {
   title: string;           
   description: string;     
-  type: "Story" | "Task" | "Bug";
-  priority: "Low" | "Medium" | "High" | "Critical"; 
+  type: "STORY" | "TASK" | "BUG";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"; 
   status: string;         
   dueDate?: string | null; 
   parentId?: string | null; 
@@ -121,3 +121,8 @@ export interface ColumnProps {
   onDeleteTask: (taskId: string, columnId: string) => Promise<void>;
 }
 
+export interface Board {
+  id : string;
+  name : string;
+  projectId : string;
+}

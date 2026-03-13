@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import styles from "./Modal.module.css";
 //import { useParams } from "react-router-dom";
 import type {CreateTaskPayload} from "../../types/kanban";
-type TaskType = "Story" | "Task" | "Bug";
-type PriorityType = "Low" | "Medium" | "High" | "Critical";
+type TaskType = "STORY" | "TASK" | "BUG";
+type PriorityType = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 interface CreateTaskModalProps {
   columnId: string;
@@ -16,8 +16,8 @@ interface CreateTaskModalProps {
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, onClose, onAdd }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<TaskType>("Task");
-  const [priority, setPriority] = useState<PriorityType>("Medium");
+  const [type, setType] = useState<TaskType>("TASK");
+  const [priority, setPriority] = useState<PriorityType>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
   const [assignee, setAssignee] = useState(""); // Add assignee state  //
 
@@ -95,10 +95,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, on
             <div className={styles.field}>
               <label>Priority</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityType)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
 

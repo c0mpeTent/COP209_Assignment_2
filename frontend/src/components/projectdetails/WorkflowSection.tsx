@@ -1,24 +1,25 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom"; // Import routing hooks
 import styles from "./ProjectSections.module.css";
+import type {Board} from "../../types/kanban"
 
 interface WorkflowProps {
-  workflows: string[];
+  //workflows: string[];
   userRole: string;
+  boards: Board[] ,
   onAdd: (name: string) => void;
 }
 
-const WorkflowSection: React.FC<WorkflowProps> = ({ workflows, userRole, onAdd }) => {
+const WorkflowSection: React.FC<WorkflowProps> = ({ userRole, boards, onAdd }) => {
   const navigate = useNavigate();
   const { id: projectId } = useParams(); // Get the current project ID from the URL
   
   const canAddWorkflow = userRole === "GLOBAL_ADMIN" || userRole === "PROJECT_ADMIN";
 
-  const handleShowWorkflow = (workflowName: string) => {
-    // Navigate to the kanban board for this specific workflow
-    // Format: /project/1/workflow/Frontend-Sprint
-    const formattedName = workflowName.replace(/\s+/g, '-').toLowerCase();
-    navigate(`/project/${projectId}/workflow/${formattedName}`);
+  const handleShowWorkflow = (workflowId: string) => {
+    // Navigate using the board's unique ID
+    // URL Format matches App.tsx: /project/:projectId/workflow/:boardId
+    navigate(`/project/${projectId}/workflow/${workflowId}`);
   };
 
   return (
@@ -43,17 +44,18 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ workflows, userRole, onAdd }
       </div>
       
       <div className={styles.gridws}>
-        {workflows.map((wf, i) => (
-          <div key={i} className={styles.boardCard}>
+        {/* 2. Map over 'boards' instead of 'workflows' */}
+        {boards.map((board) => (
+          <div key={board.id} className={styles.boardCard}>
             <div className={styles.boardInfo}>
               <span className={styles.boardIcon}>📋</span>
-              <span className={styles.boardName}>{wf}</span>
+              <span className={styles.boardName}>{board.name}</span>
             </div>
             
-            {/* The "Show" button on the far right */}
             <button 
               className={styles.showBtn} 
-              onClick={() => handleShowWorkflow(wf)}
+              // 3. Pass the actual board.id here
+              onClick={() => handleShowWorkflow(board.id)}
             >
               Show
             </button>

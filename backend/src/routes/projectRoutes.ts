@@ -4,7 +4,7 @@ import { addProjectMember , changeProjectMemberRole , deleteProjectMember } from
 import { createWorkflow , createTask , getWorkflow , deleteTask } from "../controllers/projectWorkflowController.js";
 const router = Router();
 
-// URL will be POST /api/project/create
+// URL will be POST /api/project/
 router.post("/create", createProject);
 router.get("/get", getProjects);
 router.delete("/delete/:projectId",deleteProject);
