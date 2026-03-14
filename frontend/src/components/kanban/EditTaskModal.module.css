@@ -1,0 +1,165 @@
+/* Full-screen dark overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75); /* Darker background for focus */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Modal Content Container */
+.modalContent {
+  background-color: #1e1e1e; /* Matching your column theme */
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  border-radius: 8px;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #efefef;
+}
+
+.form {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Reusable field styling from your reference */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8993a4;
+}
+
+.field input, .field select, .field textarea {
+  background-color: #2d2d2d;
+  border: 1px solid #444;
+  color: #deebff;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.field input:focus, .field textarea:focus {
+  border-color: #bb86fc;
+  outline: none;
+}
+
+/* Horizontal row for Priority and Due Date */
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.row .field {
+  flex: 1;
+}
+
+/* Comment & Activity Section */
+.activitySection {
+  margin-top: 10px;
+  border-top: 1px solid #333;
+  padding-top: 20px;
+}
+
+.activitySection h3 {
+  font-size: 1rem;
+  color: #efefef;
+  margin-bottom: 16px;
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.commentItem {
+  background-color: #252525;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+}
+
+.commentHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #8993a4;
+  margin-bottom: 6px;
+}
+
+.commentAuthor {
+  font-weight: bold;
+  color: #bb86fc;
+}
+
+.commentText {
+  color: #deebff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Footer Actions */
+.modalActions {
+  padding: 16px 24px;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background-color: #1a1a1a;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #8993a4;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.saveBtn {
+  background-color: #0052cc; /* Standard Jira blue */
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saveBtn:hover {
+  background-color: #0065ff;
+}

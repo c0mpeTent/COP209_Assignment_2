@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import styles from "./Modal.module.css";
 //import { useParams } from "react-router-dom";
-import type {CreateTaskPayload} from "../../types/kanban";
-type TaskType = "Story" | "Task" | "Bug";
-type PriorityType = "Low" | "Medium" | "High" | "Critical";
+import type {CreateTaskPayload, TaskType, PriorityType} from "../../types/kanban";
 
 interface CreateTaskModalProps {
   columnId: string;
@@ -16,8 +14,8 @@ interface CreateTaskModalProps {
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, onClose, onAdd }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<TaskType>("Task");
-  const [priority, setPriority] = useState<PriorityType>("Medium");
+  const [type, setType] = useState<TaskType>("TASK");
+  const [priority, setPriority] = useState<PriorityType>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
   const [assignee, setAssignee] = useState(""); // Add assignee state  //
 

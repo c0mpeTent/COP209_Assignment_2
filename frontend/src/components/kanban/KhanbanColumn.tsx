@@ -4,7 +4,8 @@ import ColumnHeader from "./ColumnHeader";
 import { useParams } from "react-router-dom";
 import styles from "./Kanban.module.css";
 import CreateTaskModal from "./CreateTaskModal";
-import type { CreateTaskPayload, ColumnProps } from "../../types/kanban";
+import EditTaskModal from "./EditTaskModal";
+import type { CreateTaskPayload, ColumnProps, Task } from "../../types/kanban";
 
 
 const KanbanColumn: React.FC<ColumnProps> = ({ 
@@ -12,6 +13,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   userRole,
   boardId, 
   onMoveTask, 
+  onUpdateTask,
   onRefresh, 
   onCreateTask, // Destructured
   onDeleteTask  // Destructured
@@ -22,6 +24,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
 
   const isAdmin = userRole === "PROJECT_ADMIN" || userRole === "GLOBAL_ADMIN";
   const canCreate = userRole !== "PROJECT_VIEWER";
+  const [editingTask, setEditingTask] = useState<Task | null>(null);  
 
   // Refined Create Logic: Uses the prop instead of local fetch
   const handleCreateTaskInternal = async (issuePayload: CreateTaskPayload) => {
@@ -95,6 +98,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
     }
   };
 
+
   return (
     <div className={styles.column} onDragOver={handleDragOver} onDrop={handleDrop}>
       <div className={styles.headerWrapper}>
@@ -118,6 +122,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           <TaskCard 
             key={task.id} 
             task={task} 
+            onEdit={(task) => setEditingTask(task)} // Set the task to be edited
             columnId={column.id} 
             // Pass the delete logic down to the card
             onDelete={() => onDeleteTask(task.id, column.id)} 
@@ -139,7 +144,16 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           onAdd={handleCreateTaskInternal} // Call the wrapper
         />
       )}
+      {editingTask && (
+        <EditTaskModal 
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          // Pass the payload correctly to the parent handler
+          onUpdate={(payload) => onUpdateTask(column.id, payload)}
+        />
+      )}
     </div>
+      
   );
 };
 

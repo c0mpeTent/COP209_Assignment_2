@@ -5,11 +5,12 @@ import styles from './TaskCard.module.css';
 interface TaskCardProps {
   task: Task;
   columnId: string;
+  onEdit: (task: Task) => void; // New prop for edit functionality
   onDelete: () => Promise<void>;
   userRole?: string; // Optional: to hide delete button for viewers
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, userRole }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, onEdit, userRole }) => {
   
   // RBAC: Only Admins and Members can delete tasks
   const canModify = userRole !== "PROJECT_VIEWER";
@@ -34,6 +35,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, userRole 
         </span>
         
         {canModify && (
+          <>
+            <button 
+            className={styles.editBtn} 
+            title="Edit Task"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task); // New prop function
+            }}
+          >
+            ✎
+          </button>
           <button 
             className={styles.deleteBtn} 
             title="Delete Task"
@@ -44,6 +56,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, userRole 
           >
             ✕
           </button>
+        </>
         )}
       </div>
       

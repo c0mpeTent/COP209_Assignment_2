@@ -6,23 +6,31 @@
 /**
  * Priority levels for tasks
  */
-export type PriorityType = "Low" | "Medium" | "High" | "Critical";
+export type PriorityType = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 /**
  * Hierarchical Task Types
  * Stories are parents; Tasks and Bugs are children
  */
-export type TaskType = "Story" | "Task" | "Bug";
+export type TaskType = "STORY" | "TASK" | "BUG";
 
 /**
  * Project-Level Roles for RBAC[cite: 88].
  */
 export type ProjectRole = "GLOBAL_ADMIN" | "PROJECT_ADMIN" | "PROJECT_MEMBER" | "PROJECT_VIEWER";
 
-
+export interface Comment {
+  id: string;
+  text: string;      // Supports Rich Text strings 
+  taskId: string;
+  authorId: string;
+  authorName: string; // For display purposes, avoids extra lookups
+  createdAt: string; // ISO String for auditability 
+  updatedAt: string;
+}
 
 /**
- * Interface for Issue/Task details[cite: 124, 150].
+ * Interface for Issue/Task details
  */
 export interface Task {
   id: string;
@@ -31,18 +39,19 @@ export interface Task {
   type: TaskType; 
   status: string; 
   priority: PriorityType;
-  assignee?: string; // User email or ID [cite: 129]
-  reporter: string; // User who created the task [cite: 130]
+  assignee?: string; // User email or ID 
+  reporter: string; // User who created the task ]
   dueDate?: string; 
   parentStoryId?: string; // Enforces Story -> Task/Bug relationship 
   createdAt: string; 
   updatedAt: string; 
   resolvedAt?: string; 
   closedAt?: string;
+  comments?: Comment[]; // Optional: For activity log and discussions
 }
 
 /**
- * Interface for Board Columns/Workflows[cite: 103].
+ * Interface for Board Columns/Workflows
  */
 export type ColumnData = {
   id: string; // Internal status identifier (e.g., "todo") 
@@ -52,7 +61,7 @@ export type ColumnData = {
 }
 
 /**
- * Audit Log structure (Mandatory for Backend storage)[cite: 141].
+ * Audit Log structure (Mandatory for Backend storage)
  */
 export interface AuditLog {
   taskId: string; 
@@ -65,8 +74,8 @@ export interface AuditLog {
 export interface CreateTaskPayload {
   title: string;           
   description: string;     
-  type: "Story" | "Task" | "Bug";
-  priority: "Low" | "Medium" | "High" | "Critical"; 
+  type: TaskType;
+  priority: PriorityType;
   status: string;         
   dueDate?: string | null; 
   parentId?: string | null; 
@@ -115,6 +124,7 @@ export interface ColumnProps {
   onMoveTask: (taskId: string, sourceColId: string, targetColId: string) => void;
   onRefresh: () => void;
   // Logic Addition: Defined these in the interface
+  onUpdateTask: (columnId: string, payload: UpdateTaskPayload) => Promise<void>;
   onCreateTask: (columnId: string, payload: CreateTaskPayload) => Promise<void>;
   onDeleteTask: (taskId: string, columnId: string) => Promise<void>;
 }
@@ -123,4 +133,15 @@ export interface Board {
   id : string;
   name : string;
   projectId : string;
+}
+
+export interface UpdateTaskPayload {
+  taskId: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assignee: string;
+  dueDate: string | null;
+  newComment?: string; // For adding a comment during the edit 
 }

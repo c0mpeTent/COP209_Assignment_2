@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import KanbanColumn from "../components/kanban/KhanbanColumn";
-import type { ColumnData, Task, BoardFetchResponse, CreateTaskPayload } from "../types/kanban"; // Recommended to keep types modular
+import type { ColumnData, Task, BoardFetchResponse, CreateTaskPayload, UpdateTaskPayload } from "../types/kanban"; // Recommended to keep types modular
 import styles from "./WorkflowBoard.module.css"; 
 // 1. Move static data outside the component to prevent recreation on every render
 const DEFAULT_COLUMNS: ColumnData[] = [
@@ -125,6 +125,46 @@ const WorkflowBoard: React.FC = () => {
       console.error("Task creation error:", err);
     }
   };
+  
+  const handleEditTask = async (columnId: string, payload: UpdateTaskPayload) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/projects/${projectId}/tasks/${payload.taskId}`,
+        {
+          method: "PATCH", // Appropriate HTTP method for partial updates 
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Required for JWT in HTTP-only cookies 
+          body: JSON.stringify({
+            ...payload,
+            workflowId: boardId,   // Backend: const workflowId = req.body.workflowId;
+            status: columnId          // Backend: const taskStatus = req.body.status;
+          }),
+        }
+      );
+  
+      if (response.ok) {
+        const updatedTask = await response.json();
+  
+        // Update the local state across all columns
+        setColumns((prev) =>
+          prev.map((col) => ({
+            ...col,
+            tasks: col.tasks.map((t) => 
+              t.id === payload.taskId ? updatedTask : t
+            ),
+          }))
+        );
+        
+        // If the status changed, you might need to re-sort tasks or refresh
+        fetchBoardData(); 
+      } else {
+        const error = await response.json();
+        alert(`Update failed: ${error.message}`);
+      }
+    } catch (err) {
+      console.error("Error updating task:", err);
+    }
+  };
 
   // 2. Delete Task Function
   const handleDeleteTask = async (taskId: string, columnId: string) => {
@@ -151,6 +191,8 @@ const WorkflowBoard: React.FC = () => {
       console.error("Task deletion error:", err);
     }
   };
+
+
   return (
     <div className={styles.boardWrapper}>
       <header className={styles.boardHeader}>
@@ -170,6 +212,7 @@ const WorkflowBoard: React.FC = () => {
             onRefresh={fetchBoardData} 
             onMoveTask={handleMoveTask}
             // FIX: Explicitly type the payload to fix ts(2345)
+            onUpdateTask={(columnId: string, payload: UpdateTaskPayload) => handleEditTask(columnId, payload)} 
             onCreateTask={(columnId: string, payload: CreateTaskPayload) => handleCreateTask(columnId, payload)} 
             onDeleteTask={(taskId: string, columnId: string) => handleDeleteTask(taskId, columnId)}
           />
