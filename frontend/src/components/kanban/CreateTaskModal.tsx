@@ -93,10 +93,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, on
             <div className={styles.field}>
               <label>Priority</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityType)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
 

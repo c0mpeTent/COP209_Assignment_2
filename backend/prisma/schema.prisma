@@ -67,6 +67,7 @@ model Column {
   wipLimit  Int?               // Mandatory: Must block invalid moves if full 
   boardId   String             @db.ObjectId
   board     Board              @relation(fields: [boardId], references: [id])
+  tasks     Task[]
 }
 
 enum TaskType {
@@ -86,8 +87,7 @@ model Task {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
   title         String 
   description   String 
-  type          TaskType 
-  status        String         // Linked to Column name
+  type          TaskType        // Linked to Column name
   priority      Priority        @default(MEDIUM) 
   dueDate       DateTime? 
 
@@ -109,6 +109,8 @@ model Task {
   // Relations
   boardId       String    @db.ObjectId
   board         Board     @relation(fields: [boardId], references: [id])
+  status        Column    @relation(fields: [statusId], references: [id])
+  statusId      String    @db.ObjectId
   reporterId    String    @db.ObjectId
   reporter      User      @relation("Reporter", fields: [reporterId], references: [id])
   assigneeId    String?   @db.ObjectId

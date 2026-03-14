@@ -10,6 +10,7 @@ import type { CreateTaskPayload, ColumnProps, Task } from "../../types/kanban";
 
 const KanbanColumn: React.FC<ColumnProps> = ({ 
   column, 
+  
   userRole,
   boardId, 
   onMoveTask, 
