@@ -22,3 +22,5 @@ WorkflowBoard.tsx:-
 changewiplimit
 wiring for create task
 create kanban column
+delete kanban column
+handleUpdateWip in Kanban Column

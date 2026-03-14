@@ -85,7 +85,11 @@ export const getWorkflow = async (req: Request, res: Response) => {
             },
             include: {
                 columns: true,
-                tasks: true
+                tasks: {
+                    include: {
+                        assignee: true,
+                    }
+                }
             }
         });
         const project = await prisma.project.findUnique({
@@ -181,7 +185,7 @@ export const createTask = async (req: Request, res: Response) => {
                 title: taskName,
                 description: taskDescription,
                 type: taskType,
-                statusId: taskStatus,
+                status: taskStatus,
                 priority: taskPriority,
                 dueDate: parsedDate,
                 boardId: workflowId,

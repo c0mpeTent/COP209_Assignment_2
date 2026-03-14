@@ -28,7 +28,14 @@ export interface Comment {
   createdAt: string; // ISO String for auditability 
   updatedAt: string;
 }
-
+export interface Assignee {
+  id: string;        // Unique identifier
+  name: string;      // User's display name [cite: 78]
+  email: string;     // User's email address [cite: 79]
+  avatarUrl?: string; // Optional URL for the uploaded avatar [cite: 80]
+  createdAt: string; // ISO timestamp of account creation
+  updatedAt: string; // ISO timestamp of last update
+}
 /**
  * Interface for Issue/Task details
  */
@@ -39,7 +46,7 @@ export interface Task {
   type: TaskType; 
   status: string; 
   priority: PriorityType;
-  assignee?: string; // User email or ID 
+  assignee?: Assignee; // User email or ID 
   reporter: string; // User who created the task ]
   dueDate?: string; 
   parentStoryId?: string; // Enforces Story -> Task/Bug relationship 
@@ -147,3 +154,4 @@ export interface UpdateTaskPayload {
   dueDate: string | null;
   newComment?: string; // For adding a comment during the edit 
 }
+

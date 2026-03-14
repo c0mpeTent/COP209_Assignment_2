@@ -82,3 +82,99 @@
   border-radius: 8px;
   /* ... rest of your styles */
 }
+
+
+/*new changes*/
+
+/* Container for the Board Name and Controls */
+.boardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333;
+}
+
+/* Controls Wrapper */
+.columnControls {
+  display: flex;
+  align-items: center;
+}
+
+/* The "+ Add Column" Button */
+.addColBtn {
+  background-color: #8100cc; /* Standard Jira Blue */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addColBtn:hover {
+  background-color: #ae00ff;
+}
+
+/* The Inline Creation Form */
+.addColForm {
+  display: flex;
+  gap: 12px;
+  background-color: #2d2d2d;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  align-items: center;
+  animation: slideIn 0.2s ease-out;
+}
+
+.addColForm input {
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  color: #deebff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  width: 150px; /* Column Name width */
+}
+
+.addColForm input[type="number"] {
+  width: 80px; /* WIP Limit width */
+}
+
+.addColForm input:focus {
+  border-color: #bb86fc;
+  outline: none;
+}
+
+/* Action Buttons inside the Form */
+.addColForm button[type="submit"] {
+  background-color: #28a745; /* Success Green */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.addColForm button[type="button"] {
+  background: transparent;
+  color: #8993a4;
+  border: 1px solid #444;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.addColForm button[type="button"]:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #efefef;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

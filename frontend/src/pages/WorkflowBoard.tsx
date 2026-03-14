@@ -20,7 +20,9 @@ const WorkflowBoard: React.FC = () => {
   const [viewerRole, setViewerRole] = useState("GLOBAL_ADMIN");
   const [workflowName, setWorkflowName] = useState("NOTKNOWN")
   const [boardId, setboardId] = useState("notdefined");
-
+  const [newColName, setNewColName] = useState("");
+  const [newColWip, setNewColWip] = useState(0);
+  const [showAddColumn, setShowAddColumn] = useState(false);
 
   const fetchBoardData = useCallback(async () => {
     // Only set loading if it's not already true (prevents flicker on refresh)
@@ -44,7 +46,7 @@ const WorkflowBoard: React.FC = () => {
             title: col.name,
             order: col.order,
             wipLimit: col.wipLimit ?? 0,
-            tasks: data.tasks.filter(task => task.status === col.name) 
+            tasks: data.tasks.filter(task => task.status === col.id) 
           }));
 
         setColumns(initializedColumns);
@@ -193,12 +195,71 @@ const WorkflowBoard: React.FC = () => {
     }
   };
 
+  const handleCreateColumn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newColName.trim()) return;
+  
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-column`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          projectId,
+          boardId,
+          name: newColName,
+          wipLimit: newColWip,
+          order: columns.length + 1 // Place at the end
+        })
+      });
+  
+      if (response.ok) {
+        // Clear inputs and refresh data to show the new column
+        setNewColName("");
+        setNewColWip(0);
+        setShowAddColumn(false);
+        fetchBoardData(); 
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.message}`);
+      }
+    } catch (err) {
+      console.error("Failed to create column:", err);
+    }
+  };
 
   return (
     <div className={styles.boardWrapper}>
       <header className={styles.boardHeader}>
         <h1>{workflowName?.replace('-', ' ').toUpperCase()}</h1>
-        <h3>{projectId}</h3>
+        
+          {(viewerRole === "PROJECT_ADMIN" || viewerRole === "GLOBAL_ADMIN") && (
+          <div className={styles.columnControls}>
+            {!showAddColumn ? (
+              <button onClick={() => setShowAddColumn(true)} className={styles.addColBtn}>
+                + Add Column
+              </button>
+            ) : (
+              <form onSubmit={handleCreateColumn} className={styles.addColForm}>
+                <input 
+                  type="text" 
+                  placeholder="Column Name" 
+                  value={newColName} 
+                  onChange={(e) => setNewColName(e.target.value)}
+                  required
+                />
+                <input 
+                  type="number" 
+                  placeholder="WIP Limit" 
+                  value={newColWip} 
+                  onChange={(e) => setNewColWip(parseInt(e.target.value) || 0)}
+                />
+                <button type="submit">Create</button>
+                <button type="button" onClick={() => setShowAddColumn(false)}>Cancel</button>
+              </form>
+            )}
+          </div>
+        )}
       </header>
 
       <div className={styles.kanbanContainer}>

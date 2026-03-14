@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import type { Task } from '../../types/kanban'; // Ensure this matches your shared types file
 import styles from './TaskCard.module.css';
 
@@ -14,7 +14,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, onEdit, u
   
   // RBAC: Only Admins and Members can delete tasks
   const canModify = userRole !== "PROJECT_VIEWER";
-
+  const [showName, setShowName] = useState(false);
+  
   const handleDragStart = (e: React.DragEvent) => {
     // Required for Native DnD to identify the task and its origin
     e.dataTransfer.setData("taskId", task.id);
@@ -36,16 +37,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, onEdit, u
         
         {canModify && (
           <>
-            <button 
-            className={styles.editBtn} 
-            title="Edit Task"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(task); // New prop function
-            }}
-          >
-            ✎
-          </button>
+
           <button 
             className={styles.deleteBtn} 
             title="Delete Task"
@@ -73,12 +65,34 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, columnId, onDelete, onEdit, u
           <span className={`${styles.priorityIndicator} ${styles[task.priority.toLowerCase()]}`} />
           <span className={styles.priorityText}>{task.priority}</span>
         </div>
-        
         {task.assignee && (
-          <div className={styles.assigneeWrapper} title={`Assigned to ${task.assignee}`}>
-            <span className={styles.avatar}>👤</span>
+          <div className={styles.assigneeContainer} onClick={() => setShowName(!showName)}>
+            <div className={styles.avatarCircle}>
+              {task.assignee.avatarUrl ? (
+                <img src={task.assignee.avatarUrl} className={styles.avatar} />
+              ) : (
+                <span>👤</span>
+              )}
+            </div>
+            
+            {showName && (
+              <span className={styles.nameTag}>
+                {task.assignee.name}
+              </span>
+            )}
           </div>
         )}
+        <button 
+            className={styles.editBtn} 
+            title="Edit Task"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task); // New prop function
+            }}
+          >
+            ✎
+          </button>
+        
       </div>
     </div>
   );

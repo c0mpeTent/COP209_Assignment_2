@@ -27,7 +27,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, onClose, onUpdate }
       description: formData.description || "", // Convert undefined to empty string
       status: formData.status,
       priority: formData.priority,
-      assignee: formData.assignee || "",     // Convert undefined to empty string
+      assignee: typeof formData.assignee === 'object' ? formData.assignee.id : (formData.assignee || ""),
       dueDate: formData.dueDate,
       newComment: newComment.trim() || undefined,
     };
