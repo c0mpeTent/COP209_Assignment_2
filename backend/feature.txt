@@ -31,3 +31,117 @@ comments tagging users
 notification 
 side bar for each task for a user 
 
+frontend updted for existing file, backend is left and routing app.tsx
+extra files 
+
+Stage 0: Stabilize The Current Base
+Goal: make the existing code consistent before adding new features.
+
+Fix broken API path mismatches between frontend and backend, especially in [WorkflowBoard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/WorkflowBoard.tsx) and [KhanbanColumn.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/kanban/KhanbanColumn.tsx).
+Wire missing backend routes in [projectRoutes.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/routes/projectRoutes.ts) for task update and column operations.
+Fix enum/type mismatches in [CreateTaskModal.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/kanban/CreateTaskModal.tsx) and [types/kanban.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/types/kanban.tsx).
+Rename [backend/tconfig.json](/Users/ommeena/Documents/New project/assignment_2/backend/tconfig.json) to proper tsconfig.json setup.
+Fix obvious frontend bugs like the rerender loop in [Profile.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/Profile.tsx).
+Definition of done: app builds, main routes load, current features stop failing due to wiring mistakes.
+
+
+Stage 1: Complete Auth, Session, And RBAC
+Goal: satisfy the assignment’s auth and role rules.
+
+Keep register/login/logout/me working.
+Add refresh token mechanism and refresh endpoint.
+Make logout invalidate refresh token.
+Clean up role checks so Global Admin and Project Admin permissions match the PDF.
+Reduce any usage in auth and request user typing.
+Files: [authController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/authController.ts), [authRoutes.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/routes/authRoutes.ts), [projectMemberController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectMemberController.ts).
+Definition of done: sessions renew correctly, protected routes work, role enforcement matches assignment.
+
+
+Stage 2: Finish Projects
+Goal: complete project-level requirements.
+
+Add update project flow beyond description.
+Add archive/unarchive project flow using isArchived.
+Decide how archived projects appear in dashboard.
+Make member assignment and project role assignment fully correct.
+Files: [projectController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectController.ts), [ProjectDetails.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/ProjectDetails.tsx), [Dashboard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/Dashboard.tsx).
+Definition of done: create, update, archive, assign users, and role-based project access all work.
+Stage 3: Finish Boards And Columns
+Goal: complete the Kanban board structure.
+
+Add column create, rename, reorder, delete.
+Persist column order in DB.
+Restrict board workflow changes to Project Admin.
+Keep default columns for new boards.
+Files: [projectWorkflowController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectWorkflowController.ts), [projectRoutes.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/routes/projectRoutes.ts), [WorkflowBoard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/WorkflowBoard.tsx), [KhanbanColumn.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/kanban/KhanbanColumn.tsx).
+Definition of done: every board can manage its own columns correctly.
+Stage 4: Finish Task CRUD And Task Details
+Goal: complete the core task system.
+
+Make task create, edit, delete fully persistent.
+Add proper task details view or side panel.
+Support changing status, priority, assignee, due date.
+Make drag-and-drop persist to backend.
+Enforce viewer read-only behavior.
+Files: [projectWorkflowController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectWorkflowController.ts), [WorkflowBoard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/WorkflowBoard.tsx), [EditTaskModal.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/kanban/EditTaskModal.tsx), [TaskCard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/kanban/TaskCard.tsx).
+Definition of done: task CRUD and movement are reliable and visible in UI.
+Stage 5: Add Workflow Rules, WIP Enforcement, And Story Hierarchy
+Goal: satisfy the assignment’s harder business logic.
+
+Enforce valid status transitions on backend.
+Enforce WIP limits on backend, not just frontend.
+Implement story/task/bug hierarchy rules.
+Prevent stories from being moved directly if that is your chosen behavior.
+Keep story state consistent with children.
+Files: [schema.prisma](/Users/ommeena/Documents/New project/assignment_2/backend/prisma/schema.prisma), [projectWorkflowController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectWorkflowController.ts), [WorkflowBoard.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/pages/WorkflowBoard.tsx).
+Definition of done: invalid moves are blocked, hierarchy is enforced, workflow logic matches the PDF.
+Stage 6: Audit Trail And Automatic Timestamps
+Goal: cover mandatory backend traceability.
+
+Log status changes with old/new values.
+Log assignee changes with old/new values.
+Log comment add/edit/delete events.
+Update createdAt, updatedAt, resolvedAt, closedAt correctly.
+Files: [schema.prisma](/Users/ommeena/Documents/New project/assignment_2/backend/prisma/schema.prisma), [projectWorkflowController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/projectWorkflowController.ts).
+Definition of done: audit data is stored even if you do not build a full audit UI.
+Stage 7: Comments And Collaboration
+Goal: complete task collaboration.
+
+Create comment routes/controllers.
+Add comment threads per task.
+Allow users to edit/delete only their own comments.
+Add @username mention parsing.
+Add activity timeline in task detail view.
+If rich text is too much, do a minimal formatted-text approach that you can defend in viva.
+Suggested new files: [commentController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/commentController.ts), [commentRoutes.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/routes/commentRoutes.ts), [CommentThread.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/CommentThread.tsx), [ActivityTimeline.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/ActivityTimeline.tsx).
+Definition of done: task collaboration works end to end.
+Stage 8: Notifications
+Goal: complete the final major feature.
+
+Add persistent notification creation on assignment, status change, comment, and mention.
+Add notification fetch endpoint.
+Add mark-as-read endpoint.
+Build a small notification center UI.
+Polling is enough; no need for WebSockets unless time remains.
+Suggested new files: [notificationController.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/controllers/notificationController.ts), [notificationRoutes.ts](/Users/ommeena/Documents/New project/assignment_2/backend/src/routes/notificationRoutes.ts), [NotificationCenter.tsx](/Users/ommeena/Documents/New project/assignment_2/frontend/src/components/NotificationCenter.tsx).
+Definition of done: in-app persistent notifications work.
+Stage 9: Quality, Tests, And Submission
+Goal: make it gradable.
+
+Remove or minimize any.
+Add backend unit tests for auth, projects, boards, tasks, workflow rules.
+Run lint and build cleanly.
+Expand [README.md](/Users/ommeena/Documents/New project/assignment_2/README.md) with setup, env vars, run steps, and API summary.
+Prepare report.pdf with design decisions and GitHub link.
+Definition of done: project is submission-ready, not just feature-complete.
+Recommended Milestones
+
+Minimum working submission: Stages 0 through 4.
+Strong functional submission: Stages 0 through 6.
+Near-complete assignment submission: Stages 0 through 9.
+Best Order If You’re Short On Time
+
+Do not start notifications before comments.
+Do not start comments before task edit/move logic is solid.
+Do not start new features before Stage 0 cleanup.
+Do backend enforcement before frontend polish for WIP and transitions.
