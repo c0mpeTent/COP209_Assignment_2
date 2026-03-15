@@ -9,6 +9,7 @@ interface Member {
 
 interface TeamMemberRowProps {
   member: Member;
+  currentUserRole: string;
   canChangeRoles: boolean;
   // New prop to handle the actual change
   onUpdateRole: (email: string, newRole: string) => void;
@@ -18,11 +19,15 @@ interface TeamMemberRowProps {
 
 const TeamMemberRow: React.FC<TeamMemberRowProps> = ({ 
   member, 
+  currentUserRole,
   canChangeRoles, 
   onUpdateRole,
   onRemove 
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const canManageThisMember =
+    canChangeRoles &&
+    !(currentUserRole === "PROJECT_ADMIN" && member.role === "GLOBAL_ADMIN");
 
   const handleRoleChange = (newRole: string) => {
     onUpdateRole(member.email, newRole);
@@ -39,7 +44,7 @@ const TeamMemberRow: React.FC<TeamMemberRowProps> = ({
       </div>
 
       <div className={styles.menuContainer}>
-        {canChangeRoles ? (
+        {canManageThisMember ? (
           <>
             <button className={styles.threeDots} onClick={() => setMenuOpen(!menuOpen)}>⋮</button>
             

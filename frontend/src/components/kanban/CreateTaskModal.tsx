@@ -1,98 +1,137 @@
 import React, { useState } from "react";
 import styles from "./Modal.module.css";
-//import { useParams } from "react-router-dom";
-import type {CreateTaskPayload, TaskType, PriorityType} from "../../types/kanban";
+import type {
+  BoardMemberOption,
+  CreateTaskPayload,
+  PriorityType,
+  TaskType,
+} from "../../types/kanban";
 
 interface CreateTaskModalProps {
   columnId: string;
   boardId: string;
+  members: BoardMemberOption[];
+  title?: string;
+  allowedTypes?: TaskType[];
+  defaultType?: TaskType;
+  fixedParentStoryId?: string | null;
   onClose: () => void;
-  // onAdd handles the API submission in the parent component
-  onAdd: (payload: CreateTaskPayload) => void; 
+  onAdd: (payload: CreateTaskPayload) => Promise<void> | void;
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, onClose, onAdd }) => {
-  const [title, setTitle] = useState("");
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+  columnId,
+  boardId,
+  members,
+  title: modalTitle = "Create Issue",
+  allowedTypes = ["TASK", "BUG", "STORY"],
+  defaultType = "TASK",
+  fixedParentStoryId = null,
+  onClose,
+  onAdd,
+}) => {
+  const [taskTitle, setTaskTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<TaskType>("TASK");
+  const [type, setType] = useState<TaskType>(defaultType);
   const [priority, setPriority] = useState<PriorityType>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
-  const [assignee, setAssignee] = useState(""); // Add assignee state  //
+  const [assignee, setAssignee] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Explicitly type the payload to catch missing properties
+
+    if (isSubmitting) {
+      return;
+    }
+
     const payload: CreateTaskPayload = {
-      workflowId:  boardId || "", // Or however you identify the board ID
-      title: title,                   // map title state to 'name'
+      workflowId: boardId || "",
+      title: taskTitle,
       description,
       type,
       priority,
       status: columnId,
       dueDate: dueDate || null,
-      parentStoryId: null,           // map to parentStoryId
-      assignee, 
-      createdAt: new Date().toISOString() // FIX: Added to resolve ts(2739)
+      parentStoryId: fixedParentStoryId,
+      assignee: assignee || undefined,
     };
 
-    onAdd(payload);
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await onAdd(payload);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={() => !isSubmitting && onClose()}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <header className={styles.modalHeader}>
-          <h2>Create Issue</h2>
+          <h2>{modalTitle}</h2>
         </header>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label>Issue Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value as TaskType)}>
-              <option value="Task">Task</option>
-              <option value="Story">Story</option>
-              <option value="Bug">Bug</option>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as TaskType)}
+              disabled={allowedTypes.length === 1 || isSubmitting}
+            >
+              {allowedTypes.includes("TASK") && <option value="TASK">Task</option>}
+              {allowedTypes.includes("STORY") && <option value="STORY">Story</option>}
+              {allowedTypes.includes("BUG") && <option value="BUG">Bug</option>}
             </select>
           </div>
 
           <div className={styles.field}>
-            <label>Title <span className={styles.required}></span></label>
-            <input 
-              type="text" 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-              required 
+            <label>Title</label>
+            <input
+              type="text"
+              value={taskTitle}
+              disabled={isSubmitting}
+              onChange={(e) => setTaskTitle(e.target.value)}
+              required
               placeholder="What needs to be done?"
             />
           </div>
 
           <div className={styles.field}>
             <label>Description</label>
-            <textarea 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)} 
+            <textarea
+              value={description}
+              disabled={isSubmitting}
+              onChange={(e) => setDescription(e.target.value)}
               rows={5}
             />
           </div>
-          {/* Moved Assignee here: Full width below Description */}
+
           <div className={styles.field}>
             <label>Assignee</label>
-            <input 
-              type="text" 
-              value={assignee} 
-              onChange={(e) => setAssignee(e.target.value)} 
-              placeholder="User ID or Email"
-              required
-            />
-            
+            <select
+              value={assignee}
+              disabled={isSubmitting}
+              onChange={(e) => setAssignee(e.target.value)}
+            >
+              <option value="">Unassigned</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.email}>
+                  {member.name} ({member.email})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.row}>
             <div className={styles.field}>
               <label>Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityType)}>
+              <select
+                value={priority}
+                disabled={isSubmitting}
+                onChange={(e) => setPriority(e.target.value as PriorityType)}
+              >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
@@ -102,17 +141,27 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ columnId, boardId, on
 
             <div className={styles.field}>
               <label>Due Date</label>
-              <input 
-                type="date" 
-                value={dueDate} 
-                onChange={(e) => setDueDate(e.target.value)} 
+              <input
+                type="date"
+                value={dueDate}
+                disabled={isSubmitting}
+                onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
           </div>
 
           <footer className={styles.modalActions}>
-            <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
-            <button type="submit" className={styles.submitBtn}>Create</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelBtn}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create"}
+            </button>
           </footer>
         </form>
       </div>

@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import WorkflowSection from "../components/projectdetails/WorkflowSection";
 import TeamSection from "../components/projectdetails/TeamSection";
 import styles from "./ProjectDetails.module.css";
-import type {Board} from "../types/kanban"
+import type { Board } from "../types/kanban";
 
 interface ProjectMemberResponse {
   role: string;
   user: {
-    role: string;
     email: string;
     name: string;
   };
@@ -17,140 +16,203 @@ interface ProjectMemberResponse {
 interface BoardResponse {
   id: string;
   name: string;
-  projectId : string;
+  projectId: string;
 }
 
 interface ProjectDataResponse {
+  viewerRole: string;
   project: {
     name: string;
     id: string;
     description: string | null;
+    isArchived: boolean;
     members: ProjectMemberResponse[];
     boards: BoardResponse[];
   };
 }
 
+interface TeamMember {
+  email: string;
+  role: string;
+}
 
 const ProjectDetails: React.FC = () => {
-  // get the ID from the URL (e.g., /project/:id)
-
   const { id } = useParams<{ id: string }>();
 
-  // state for the data
-  const [projectName, setProjectName] = useState("P"); // New state
-  //const [loggedInUserEmail, setLoggedInUserEmail] = useState("_");
+  const [projectName, setProjectName] = useState("Project");
   const [description, setDescription] = useState("Loading description...");
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
-  const [tempDesc, setTempDesc] = useState("");
   const [loading, setLoading] = useState(true);
-  //const [userRole] = useState("PROJECT_ADMIN"); // Mock role
   const [workflows, setWorkflows] = useState<string[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
-  const [members, setMembers] = useState([
-    { email: "owner@pro.com", role: "GLOBAL_ADMIN" },
-    { email: "manager@pro.com", role: "PROJECT_ADMIN" },
-    { email: "dev@pro.com", role: "PROJECT_MEMBER" },
-  ]);
-  const [viewerRole, setViewerRole] = useState("POJECT_ADMIN");
-  
-  useEffect(() => {
-  const loadAllData = async () => {
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [viewerRole, setViewerRole] = useState("PROJECT_VIEWER");
+  const [isArchived, setIsArchived] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [projectNameInput, setProjectNameInput] = useState("");
+  const [projectDescriptionInput, setProjectDescriptionInput] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isAddingWorkflow, setIsAddingWorkflow] = useState(false);
+  const [deletingWorkflowId, setDeletingWorkflowId] = useState<string | null>(null);
+  const [isAddingMember, setIsAddingMember] = useState(false);
+
+  const canManageProject =
+    viewerRole === "GLOBAL_ADMIN" || viewerRole === "PROJECT_ADMIN";
+  const effectiveRole = isArchived ? "PROJECT_VIEWER" : viewerRole;
+
+  const loadProjectData = useCallback(async () => {
+    if (!id) {
+      return;
+    }
+
     try {
-      // 1. Fetch user profile first
-      const profileResponse = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      let userEmail = "_";
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
-        userEmail = profileData.user.email;
-        //setLoggedInUserEmail(userEmail);
-      }
-
-      // 2. Then fetch project data
-      if (id) {
-        const projectResponse = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`, {
+      const projectResponse = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-project/${id}`,
+        {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          credentials: "include"
-        });
-        
-        if (projectResponse.ok) {
-          const data: ProjectDataResponse = await projectResponse.json();
-          const project = data.project;
-          
-          setProjectName(project.name);
-          const workflowNames = project.boards.map((b: BoardResponse) => b.name);
-          setWorkflows(workflowNames);
-          setBoards(project.boards);
-          
-          const formattedMembers = project.members.map((m: ProjectMemberResponse) => ({
-            email: m.user.email,
-            role: m.role
-          }));
-          
-          setMembers(formattedMembers);
-          
-          // Now loggedInUserEmail is properly set
-          const currentMember = project.members.find(
-            (member) => member.user.email === userEmail
-          );
-          
-          setViewerRole(currentMember?.role ?? "PROJECT_VIEWER");
-          setDescription(project.description || "No description provided.");
-          setTempDesc(project.description || "");
+          credentials: "include",
         }
+      );
+
+      if (!projectResponse.ok) {
+        const errorData = await projectResponse.json();
+        throw new Error(errorData.message || "Could not load project");
       }
+
+      const data: ProjectDataResponse = await projectResponse.json();
+      const project = data.project;
+
+      setProjectName(project.name);
+      setDescription(project.description || "No description provided.");
+      setProjectNameInput(project.name);
+      setProjectDescriptionInput(project.description || "");
+      setIsArchived(project.isArchived);
+      setViewerRole(data.viewerRole || "PROJECT_VIEWER");
+
+      const workflowNames = project.boards.map((board: BoardResponse) => board.name);
+      setWorkflows(workflowNames);
+      setBoards(project.boards);
+
+      const formattedMembers = project.members.map((member) => ({
+        email: member.user.email,
+        role: member.role,
+      }));
+      setMembers(formattedMembers);
     } catch (error) {
       console.error("Data loading error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  loadAllData();
-}, [id]); // Add id as dependency
-  
-  const handleUpdateDescription = async () => {
+  useEffect(() => {
+    setLoading(true);
+    void loadProjectData();
+  }, [loadProjectData]);
+
+  const handleUpdateProject = async () => {
+    if (!id || !projectNameInput.trim()) {
+      setSaveError("Project name is required.");
+      return;
+    }
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/set-project-description`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ projectId: id, description: tempDesc })
-      });
-  
-      if (response.ok) {
-        setDescription(tempDesc);
-        setIsEditingDesc(false);
-      } else {
-        const errorData = await response.json();
-        alert(`Update failed: ${errorData.message}`);
+      setIsSaving(true);
+      setSaveError("");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: projectNameInput,
+            description: projectDescriptionInput,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        setSaveError(data.message || "Update failed");
+        return;
       }
+
+      setProjectName(data.project.name);
+      setDescription(data.project.description || "No description provided.");
+      setProjectNameInput(data.project.name);
+      setProjectDescriptionInput(data.project.description || "");
+      setIsEditModalOpen(false);
     } catch (error) {
-      console.error("Error updating description:", error);
+      console.error("Error updating project:", error);
+      setSaveError("Could not update project details.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  const handleArchiveToggle = async () => {
+    if (!id) {
+      return;
+    }
+
+    const action = isArchived ? "restore" : "archive";
+    const confirmed = window.confirm(
+      `Do you want to ${action} this project now?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsArchiving(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/archive/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ isArchived: !isArchived }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        alert(`Update failed: ${data.message}`);
+        return;
+      }
+
+      setIsArchived(data.project.isArchived);
+    } catch (error) {
+      console.error("Project archive update failed:", error);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const handleUpdateRole = async (email: string, newRole: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/change-member-role`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          // REMOVED: Authorization header (Cookie handles this now)
-        },
-        // CRITICAL: This allows the browser to send the HTTP-only cookie
-        credentials: "include", 
-        body: JSON.stringify({ projectId : id , memberEmail : email, role: newRole })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/change-member-role`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ projectId: id, memberEmail: email, role: newRole }),
+        }
+      );
 
       if (response.ok) {
         setMembers((prev) =>
-          prev.map((m) => (m.email === email ? { ...m, role: newRole } : m))
+          prev.map((member) =>
+            member.email === email ? { ...member, role: newRole } : member
+          )
         );
       } else {
         const errorData = await response.json();
@@ -161,18 +223,117 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
-  // 1. Remove Member (DELETE Request)
-  const handleRemoveMember = async (email: string) => {
+  const handleAddWorkflow = async (name: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-member`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Required for HTTP-only cookies
-        body: JSON.stringify({ projectId : id , memberEmail: email })
-      });
+      setIsAddingWorkflow(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-workflow`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name, projectId: id }),
+        }
+      );
 
       if (response.ok) {
-        setMembers((prev) => prev.filter((m) => m.email !== email));
+        const newWorkflow = await response.json();
+        setWorkflows((prev) => [...prev, newWorkflow.name]);
+        setBoards((prev) => [...prev, newWorkflow]);
+      }
+    } catch (error) {
+      console.error("Failed to add workflow:", error);
+    } finally {
+      setIsAddingWorkflow(false);
+    }
+  };
+
+  const handleDeleteWorkflow = async (workflowId: string, workflowName: string) => {
+    const confirmed = window.confirm(
+      `Do you want to delete the workflow "${workflowName}"? This will also remove its tasks and columns.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingWorkflowId(workflowId);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-workflow/${workflowId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.message || "Could not delete workflow.");
+        return;
+      }
+
+      setBoards((prev) => {
+        const nextBoards = prev.filter((board) => board.id !== workflowId);
+        setWorkflows(nextBoards.map((board) => board.name));
+        return nextBoards;
+      });
+    } catch (error) {
+      console.error("Failed to delete workflow:", error);
+    } finally {
+      setDeletingWorkflowId((current) => (current === workflowId ? null : current));
+    }
+  };
+
+  const handleAddMember = async (email: string) => {
+    try {
+      setIsAddingMember(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            projectId: id,
+            memberEmail: email,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const newMember = {
+          email: data.user.email,
+          role: data.projectMember.role,
+        };
+
+        setMembers((prev) => [...prev, newMember]);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Could not invite user.");
+      }
+    } catch (error) {
+      console.error("Failed to add member:", error);
+    } finally {
+      setIsAddingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (email: string) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-member`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ projectId: id, memberEmail: email }),
+        }
+      );
+
+      if (response.ok) {
+        setMembers((prev) => prev.filter((member) => member.email !== email));
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.message}`);
@@ -182,117 +343,154 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
-  // 2. Add Workflow/Board (POST Request)
-  const handleAddWorkflow = async (name: string) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-workflow`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name , projectId : id })
-      });
-
-      if (response.ok) {
-        const newWorkflow = await response.json();
-        setWorkflows((prev) => [...prev, newWorkflow.name]);
-        setBoards((prev) => [...prev, newWorkflow]);
-      }
-    } catch (error) {
-      console.error("Failed to add workflow:", error);
-    }
-  };
-
-  //const handleDeleteWorkflow = async (name: string) => {}
-
-  
-  const handleAddMember = async (email: string) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Required for HTTP-only cookies 
-        body: JSON.stringify({ 
-          projectId: id, 
-          memberEmail: email 
-        })
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        // Extract data based on your backend: res.status(200).json({ projectMember, user })
-        const newMember = { 
-          email: data.user.email, 
-          role: data.projectMember.role 
-        };
-        
-        setMembers((prev) => [...prev, newMember]);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || "Could not invite user.");
-      }
-    } catch (error) {
-      console.error("Failed to add member:", error);
-    }
-  };
-
   if (loading) return <div className={styles.loader}>Loading Project Data...</div>;
 
   return (
     <div className={styles.container}>
-      {/* Header showing which project we are in */}
       <header className={styles.projectHeader}>
-        <h1 className={styles.projectName}>Project Name : {projectName}</h1>
-        <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
+        <div>
+          <h1 className={styles.projectName}>Project Name : {projectName}</h1>
+          <div className={styles.metaRow}>
+            <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
+            <span
+              className={`${styles.statusBadge} ${
+                isArchived ? styles.archivedBadge : styles.activeBadge
+              }`}
+            >
+              {isArchived ? "Archived" : "Active"}
+            </span>
+          </div>
+        </div>
+
+        {canManageProject && (
+          <div className={styles.headerActions}>
+            <button
+              className={styles.editProjectBtn}
+              onClick={() => {
+                setProjectNameInput(projectName);
+                setProjectDescriptionInput(
+                  description === "No description provided." ? "" : description
+                );
+                setSaveError("");
+                setIsEditModalOpen(true);
+              }}
+            >
+              Edit Project
+            </button>
+            <button
+              className={isArchived ? styles.restoreBtn : styles.archiveBtn}
+              onClick={handleArchiveToggle}
+              disabled={isArchiving}
+            >
+              {isArchiving
+                ? isArchived
+                  ? "Restoring..."
+                  : "Archiving..."
+                : isArchived
+                  ? "Restore Project"
+                  : "Archive Project"}
+            </button>
+          </div>
+        )}
       </header>
+
       <section className={styles.descriptionBox}>
         <div className={styles.descHeader}>
           <label>Project Description</label>
-          {(viewerRole === "GLOBAL_ADMIN" || viewerRole === "PROJECT_ADMIN") && !isEditingDesc && (
-            <button className={styles.editBtn} onClick={() => setIsEditingDesc(true)}>
-              ✎ Edit
-            </button>
+          {isArchived && (
+            <span className={styles.readOnlyNote}>
+              This project is archived and currently read-only in the UI.
+            </span>
           )}
         </div>
-
-        {isEditingDesc ? (
-          <div className={styles.editArea}>
-            <textarea
-              value={tempDesc}
-              onChange={(e) => setTempDesc(e.target.value)}
-              className={styles.descInput}
-            />
-            <div className={styles.editActions}>
-              <button onClick={handleUpdateDescription} className={styles.saveBtn}>Save</button>
-              <button onClick={() => { setIsEditingDesc(false); setTempDesc(description); }} className={styles.cancelBtn}>Cancel</button>
-            </div>
-          </div>
-        ) : (
-          <p className={styles.descText}>{description}</p>
-        )}
+        <p className={styles.descText}>{description}</p>
       </section>
+
       <div className={styles.layoutGrid}>
-        {/* Left Column: Workflows */}
         <section className={styles.mainCol}>
-          <WorkflowSection 
-            //workflows={workflows} 
-            userRole={viewerRole} 
+          <WorkflowSection
+            userRole={effectiveRole}
             boards={boards}
-            onAdd={handleAddWorkflow} 
+            onAdd={handleAddWorkflow}
+            onDelete={handleDeleteWorkflow}
+            isAdding={isAddingWorkflow}
+            deletingWorkflowId={deletingWorkflowId}
           />
         </section>
 
-        {/* Right Column: Team Sidebar */}
         <aside className={styles.sideCol}>
-        <TeamSection 
-          members={members} 
-          userRole={viewerRole}//"GLOBAL_ADMIN"
-          //currentUserEmail={loggedInUserEmail} // Use the variable here
-          onAddMember={handleAddMember} // Pass the missing prop here
-          onUpdateRole={handleUpdateRole}
-          onRemoveMember={handleRemoveMember}
-        />
+          <TeamSection
+            members={members}
+            userRole={effectiveRole}
+            onAddMember={handleAddMember}
+            onUpdateRole={handleUpdateRole}
+            onRemoveMember={handleRemoveMember}
+            isAddingMember={isAddingMember}
+          />
         </aside>
       </div>
+
+      {isEditModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsEditModalOpen(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 className={styles.modalTitle}>Edit Project</h2>
+                {/* <p className={styles.modalSubtitle}>
+                  Update the project name and description.
+                </p> */}
+              </div>
+              <button
+                className={styles.closeBtn}
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalForm}>
+              <label className={styles.modalLabel} htmlFor="project-name">
+                Project Name
+              </label>
+              <input
+                id="project-name"
+                className={styles.modalInput}
+                type="text"
+                value={projectNameInput}
+                onChange={(e) => setProjectNameInput(e.target.value)}
+              />
+
+              <label className={styles.modalLabel} htmlFor="project-description">
+                Project Description
+              </label>
+              <textarea
+                id="project-description"
+                className={styles.modalTextarea}
+                value={projectDescriptionInput}
+                onChange={(e) => setProjectDescriptionInput(e.target.value)}
+              />
+
+              {saveError && <p className={styles.formError}>{saveError}</p>}
+
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.cancelBtn}
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={styles.saveBtn}
+                  onClick={handleUpdateProject}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

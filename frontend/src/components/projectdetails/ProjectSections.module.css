@@ -7,15 +7,14 @@
 .cardws {
   display: flex;
   flex-direction: column;
-
   background-color: #1a1a1a;
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid #333;
-  width: 50vw;            /* Fill the parent width */
+  width: 100%;
   box-sizing: border-box; /* Ensures padding doesn't add to the width */
-  max-width: 1200px;      /* Optional: prevents it from looking too stretched on ultrawide monitors */
-  margin: 0 auto;         /* Centers the card if it hits the max-width */
+  max-width: none;
+  margin: 0;
 }
 
 .cardHeader h2 {
@@ -52,6 +51,25 @@
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
+}
+
+.addBtn:hover {
+  background-color: #d7b7fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(187, 134, 252, 0.3);
+}
+
+.addBtn:active {
+  transform: translateY(0);
+}
+
+.addBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 15px rgba(187, 134, 252, 0.12);
 }
 
 /* Workflow Grid */
@@ -221,6 +239,12 @@
   gap: 12px;
 }
 
+.boardActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .showBtn {
   background: rgba(187, 134, 252, 0.1);
   color: #bb86fc;
@@ -236,6 +260,23 @@
 .showBtn:hover {
   background: #bb86fc;
   color: #121212;
+}
+
+.deleteBoardBtn {
+  background: rgba(255, 85, 85, 0.08);
+  color: #ff8b8b;
+  border: 1px solid rgba(255, 85, 85, 0.28);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteBoardBtn:hover {
+  background: rgba(243, 29, 29, 0.799);
+  color: #f4e4e4;
 }
 
 .menuContainer {

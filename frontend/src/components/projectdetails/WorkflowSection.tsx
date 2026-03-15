@@ -7,12 +7,23 @@ interface WorkflowProps {
   //workflows: string[];
   userRole: string;
   boards: Board[] ,
-  onAdd: (name: string) => void;
+  onAdd: (name: string) => Promise<void>;
+  onDelete: (workflowId: string, workflowName: string) => Promise<void>;
+  isAdding?: boolean;
+  deletingWorkflowId?: string | null;
 }
 
-const WorkflowSection: React.FC<WorkflowProps> = ({ userRole, boards, onAdd }) => {
+const WorkflowSection: React.FC<WorkflowProps> = ({
+  userRole,
+  boards,
+  onAdd,
+  onDelete,
+  isAdding = false,
+  deletingWorkflowId = null,
+}) => {
   const navigate = useNavigate();
   const { id: projectId } = useParams(); // Get the current project ID from the URL
+  const [workflowNameInput, setWorkflowNameInput] = React.useState("");
   
   const canAddWorkflow = userRole === "GLOBAL_ADMIN" || userRole === "PROJECT_ADMIN";
 
@@ -28,16 +39,23 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ userRole, boards, onAdd }) =
         <h2 className={styles.mainheading}>Workflows & Boards</h2>
         {canAddWorkflow && (
           <div className={styles.inputGroup}>
-            <input type="text" placeholder="New board name..." id="wfInput" />
+            <input
+              type="text"
+              placeholder="New board name..."
+              value={workflowNameInput}
+              disabled={isAdding}
+              onChange={(event) => setWorkflowNameInput(event.target.value)}
+            />
             <button 
               className={styles.addBtn}
+              disabled={isAdding}
               onClick={() => {
-                const el = document.getElementById("wfInput") as HTMLInputElement;
-                if(el.value) onAdd(el.value);
-                el.value = "";
+                if (workflowNameInput.trim()) {
+                  void onAdd(workflowNameInput.trim()).then(() => setWorkflowNameInput(""));
+                }
               }}
             >
-              + Create
+              {isAdding ? "Creating..." : "+ Create"}
             </button>
           </div>
         )}
@@ -51,14 +69,25 @@ const WorkflowSection: React.FC<WorkflowProps> = ({ userRole, boards, onAdd }) =
               <span className={styles.boardIcon}>📋</span>
               <span className={styles.boardName}>{board.name}</span>
             </div>
-            
-            <button 
-              className={styles.showBtn} 
-              // 3. Pass the actual board.id here
-              onClick={() => handleShowWorkflow(board.id)}
-            >
-              Show
-            </button>
+
+            <div className={styles.boardActions}>
+              <button
+                className={styles.showBtn}
+                onClick={() => handleShowWorkflow(board.id)}
+                disabled={deletingWorkflowId === board.id}
+              >
+                Show
+              </button>
+              {canAddWorkflow && (
+                <button
+                  className={styles.deleteBoardBtn}
+                  disabled={deletingWorkflowId === board.id}
+                  onClick={() => void onDelete(board.id, board.name)}
+                >
+                  {deletingWorkflowId === board.id ? "Deleting..." : "Delete"}
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

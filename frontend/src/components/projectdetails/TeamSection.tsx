@@ -10,10 +10,11 @@ interface TeamMember {
 interface TeamProps {
   members: TeamMember[];
   userRole: string;
-  onAddMember: (email: string) => void;
+  onAddMember: (email: string) => Promise<void>;
   // Added these handlers to support Global Admin actions
   onUpdateRole: (email: string, newRole: string) => void;
   onRemoveMember: (email: string) => void;
+  isAddingMember?: boolean;
 }
 
 const TeamSection: React.FC<TeamProps> = ({ 
@@ -21,17 +22,17 @@ const TeamSection: React.FC<TeamProps> = ({
   userRole, 
   onAddMember,
   onUpdateRole,
-  onRemoveMember
+  onRemoveMember,
+  isAddingMember = false,
 }) => {
   const [inviteEmail, setInviteEmail] = useState("");
   
   const canAddMembers = userRole === "GLOBAL_ADMIN" || userRole === "PROJECT_ADMIN";
-  const canChangeRoles = userRole === "GLOBAL_ADMIN";
+  const canChangeRoles = canAddMembers;
 
   const handleAdd = () => {
     if (inviteEmail) {
-      onAddMember(inviteEmail);
-      setInviteEmail("");
+      void onAddMember(inviteEmail).then(() => setInviteEmail(""));
     }
   };
 
@@ -45,10 +46,11 @@ const TeamSection: React.FC<TeamProps> = ({
               type="email" 
               placeholder="Invite by email..." 
               value={inviteEmail}
+              disabled={isAddingMember}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
-            <button className={styles.addBtn} onClick={handleAdd}>
-              Add
+            <button className={styles.addBtn} onClick={handleAdd} disabled={isAddingMember}>
+              {isAddingMember ? "Adding..." : "Add"}
             </button>
           </div>
         )}
@@ -59,6 +61,7 @@ const TeamSection: React.FC<TeamProps> = ({
           <TeamMemberRow 
             key={m.email} // Using email as key is safer than index for lists that change
             member={m} 
+            currentUserRole={userRole}
             canChangeRoles={canChangeRoles}
             onUpdateRole={onUpdateRole}
             onRemove={onRemoveMember}
