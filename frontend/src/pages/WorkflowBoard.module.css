@@ -1,49 +1,361 @@
-.kanbanContainer {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto; /* Screen independent: scroll horizontally if columns don't fit */
-  padding: 20px 0;
-  height: calc(100vh - 10px);
-  align-items: flex-start;
-}
-
 .boardWrapper {
   width: 100%;
-  padding: 2rem;
-  box-sizing: border-box;
-}
-
-.boardWrapper {
-  width: 1200px;
   min-height: 100vh;
   padding: 1.5rem 2rem;
-  background-color: #121212; /* Match your theme's dark background */
+  background-color: #121212;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
 
 .boardHeader {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #333;
-  padding-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 16px 24px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
 }
 
 .boardHeader h1 {
   font-size: 1.8rem;
-  color: #bb86fc; /* Accent color */
+  color: #bb86fc;
   margin: 0;
 }
 
-.boardHeader h3 {
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 0.5rem;
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
+.editWorkflowBtn {
+  background: transparent;
+  color: #bb86fc;
+  border: 1px solid rgba(187, 134, 252, 0.35);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
+.editWorkflowBtn:hover {
+  background: rgba(187, 134, 252, 0.12);
+  border-color: #bb86fc;
+}
 
-/* Custom Scrollbar for the board to keep it looking clean */
+.editWorkflowName {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.workflowNameInput {
+  min-width: 280px;
+  background: #121212;
+  border: 1px solid #444;
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.workflowNameInput:focus {
+  border-color: #bb86fc;
+}
+
+.workflowNameSaveBtn,
+.workflowNameCancelBtn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.workflowNameSaveBtn {
+  background: #551b74;
+  color: #fff;
+  border: none;
+}
+
+.workflowNameSaveBtn:hover {
+  background: #7e00b8;
+}
+
+.workflowNameSaveBtn:disabled,
+.workflowNameCancelBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.workflowNameCancelBtn {
+  background: transparent;
+  color: #d7d7d7;
+  border: 1px solid #444;
+}
+
+.boardSubtitle {
+  margin: 0.45rem 0 0 0;
+  color: #8d8d8d;
+  font-size: 0.92rem;
+}
+
+.boardActionState {
+  margin: 0.35rem 0 0 0;
+  color: #f3c96b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.kanbanContainer {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px 0 10px;
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+.storySection {
+  margin-top: 1.25rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.storySectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.storyTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+.storyActionBtn {
+  background: rgba(187, 134, 252, 0.12);
+  color: #bb86fc;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.storyActionBtn:hover {
+  background: rgba(187, 134, 252, 0.18);
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.storyCard {
+  background: #232323;
+  color: #f0f0f0;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.45;
+  transition: all 0.2s ease;
+}
+
+.storyCard:hover {
+  border-color: #bb86fc;
+  transform: translateY(-2px);
+}
+
+.storyCardActive {
+  border-color: #bb86fc;
+  background: rgba(187, 134, 252, 0.12);
+}
+
+.storyEmpty {
+  color: #8a8a8a;
+  padding: 0.75rem 0;
+}
+/* .storyDetailsBox {
+  margin-top: 1.25rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 1.25rem;
+} */
+.storyDetailsBox {
+  margin-top: 1.25rem;
+  cursor: pointer;
+  border-top: 4px solid transparent;
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.storyDetailsBox:hover {
+  transform: translateY(-2px);
+  background-color: #000000;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+.storyDetailsBox:focus-visible {
+  outline: 2px solid rgba(187, 134, 252, 0.55);
+  outline-offset: 2px;
+}
+
+.storyPriorityCritical {
+  border-top-color: #ff4d4d;
+}
+
+.storyPriorityHigh {
+  border-top-color: #ffa500;
+}
+
+.storyPriorityMedium {
+  border-top-color: #52a0ff;
+}
+
+.storyPriorityLow {
+  border-top-color: #28a745;
+}
+
+.storyDetailsTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.storyDetailsTitle {
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+  font-size: 3rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.storyDetailsText {
+  margin: 0;
+  color: #c8c8c8;
+  line-height: 1.6;
+}
+
+.storyStatusBadge {
+  align-self: flex-start;
+  background: rgba(187, 134, 252, 0.12);
+  border: 1px solid rgba(187, 134, 252, 0.3);
+  border-radius: 999px;
+  color: #bb86fc;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 0.9rem;
+  margin-top: 20px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.storyMetaRow {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.storyMetaGroup {
+  background: #151515;
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.storyMetaLabel {
+  display: block;
+  color: #8c8c8c;
+  font-size: 0.78rem;
+  margin-bottom: 0.35rem;
+}
+
+.storyDetailsActions {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.storyActionButtons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.storyDueDate {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #f3c96b;
+  font-size: 0.95rem;
+}
+
+.storyDueDateLabel {
+  color: #8c8c8c;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.deleteStoryBtn,
+.editStoryBtn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deleteStoryBtn {
+  background: rgba(255, 85, 85, 0.08);
+  color: #ff8a8a;
+  border: 1px solid rgba(255, 85, 85, 0.25);
+}
+
+.editStoryBtn {
+  margin-right: 15px;
+  background: rgba(187, 134, 252, 0.12);
+  color: #bb86fc;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+}
+
+@media (max-width: 768px) {
+  .storyDetailsActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .storyActionButtons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .kanbanContainer::-webkit-scrollbar {
   height: 8px;
 }
@@ -61,87 +373,48 @@
   background: #444;
 }
 
-/* WorkflowBoard.module.css */
-.kanbanContainer {
-  display: flex;
-  gap: 20px;
-  width: 100%;           /* Ensure it takes full width of content area */
-  overflow-x: auto; /* Screen independent: scroll horizontally if columns don't fit */
-  padding: 20px 0;
-  padding-right: 20px;   /* Add a small padding so it doesn't touch the edge */
-  box-sizing: border-box;
-  align-items: flex-start;
-}
-
-/* In your KhanbanColumn.module.css (or wherever the column is styled) */
-.column {
-  flex: 1;               /* This makes columns grow to fill the right margin */
-  min-width: 280px;      /* Prevents columns from becoming too thin */
-  max-width: 400px;      /* Optional: keeps them from becoming too wide */
-  background: #1e1e1e;
-  border-radius: 8px;
-  /* ... rest of your styles */
-}
-
-
-/*new changes*/
-
-/* Container for the Board Name and Controls */
-.boardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333;
-}
-
-/* Controls Wrapper */
 .columnControls {
   display: flex;
   align-items: center;
 }
 
-/* The "+ Add Column" Button */
 .addColBtn {
-  background-color: #8100cc; /* Standard Jira Blue */
-  color: white;
+  background-color: #551b74;
+  color: #fff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .addColBtn:hover {
-  background-color: #ae00ff;
+  background-color: #7e00b8;
 }
 
-/* The Inline Creation Form */
 .addColForm {
   display: flex;
   gap: 12px;
-  background-color: #2d2d2d;
+  background-color: #202020;
   padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #444;
+  border-radius: 8px;
+  border: 1px solid #333;
   align-items: center;
   animation: slideIn 0.2s ease-out;
 }
 
 .addColForm input {
-  background-color: #1e1e1e;
+  background-color: #121212;
   border: 1px solid #444;
   color: #deebff;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
   font-size: 0.9rem;
-  width: 150px; /* Column Name width */
 }
 
 .addColForm input[type="number"] {
-  width: 80px; /* WIP Limit width */
+  width: 90px;
 }
 
 .addColForm input:focus {
@@ -149,32 +422,52 @@
   outline: none;
 }
 
-/* Action Buttons inside the Form */
 .addColForm button[type="submit"] {
-  background-color: #28a745; /* Success Green */
+  background-color: #2d8f5f;
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
 }
 
 .addColForm button[type="button"] {
   background: transparent;
-  color: #8993a4;
+  color: #c9c9c9;
   border: 1px solid #444;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-.addColForm button[type="button"]:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #efefef;
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: #ffffff;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .boardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .addColForm {
+    flex-wrap: wrap;
+  }
 }

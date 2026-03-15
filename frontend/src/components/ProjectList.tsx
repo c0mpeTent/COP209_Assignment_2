@@ -5,71 +5,144 @@ import styles from "./ProjectList.module.css";
 interface Project {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
+  isArchived?: boolean;
+  role?: string;
 }
 
 interface ProjectListProps {
   items: Project[];
-  onDelete: (id: string) => void; // Added delete handler prop
+  title: string;
+  emptyMessage: string;
+  onDelete: (id: string) => void;
+  onArchiveToggle: (id: string, isArchived: boolean) => void;
+  pendingDeleteId?: string | null;
+  pendingArchiveId?: string | null;
 }
 
-const ProjectList: React.FC<ProjectListProps> = ({ items, onDelete }) => {
-  const navigate = useNavigate(); // 2. Initialize the hook
-  
+const ProjectList: React.FC<ProjectListProps> = ({
+  items,
+  title,
+  emptyMessage,
+  onDelete,
+  onArchiveToggle,
+  pendingDeleteId = null,
+  pendingArchiveId = null,
+}) => {
+  const navigate = useNavigate();
+
   const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
-    e.stopPropagation(); // Prevents clicking 'X' from also triggering 'Open Board'
-    const confirmed = window.confirm(`Are you sure you want to delete the project "${name}"?`);
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the project "${name}"?`
+    );
     if (confirmed) {
       onDelete(id);
     }
   };
 
-  
+  const handleArchiveToggle = (
+    e: React.MouseEvent,
+    projectId: string,
+    name: string,
+    isArchived: boolean
+  ) => {
+    e.stopPropagation();
+    const action = isArchived ? "restore" : "archive";
+    const confirmed = window.confirm(
+      `Do you want to ${action} the project "${name}"?`
+    );
 
-  // 3. Navigation Handler
+    if (confirmed) {
+      onArchiveToggle(projectId, isArchived);
+    }
+  };
+
   const handleOpenProject = (id: string) => {
-    navigate(`/project/${id}`); // Adjust this path to match your App.tsx Route path
+    navigate(`/project/${id}`);
   };
 
   return (
     <section className={styles.container}>
-      <h3 className={styles.title}>Your Projects</h3>
-      
+      <h3 className={styles.title}>{title}</h3>
+
       <div className={styles.grid}>
         {items.length > 0 ? (
-          items.map((project) => (
-            <div key={project.id} className={styles.card}>
-              {/* Delete Button (X) */}
-              <button 
-                className={styles.deleteBtn} 
-                onClick={(e) => handleDelete(e, project.id, project.name)}
-                title="Delete Project"
-              >
-                &times;
-              </button>
+          items.map((project) => {
+            const canManageProject =
+              project.role === "GLOBAL_ADMIN" || project.role === "PROJECT_ADMIN";
+            const canDeleteProject = project.role === "GLOBAL_ADMIN";
+            const isDeleting = pendingDeleteId === project.id;
+            const isArchiving = pendingArchiveId === project.id;
 
-              <div className={styles.cardHeader}>
-                <h4>{project.name}</h4>
-                <span className={styles.tag}>Active</span>
-              </div>
-              <p className={styles.desc}>
-                {project.description || "No description provided."}
-              </p>
-              <div className={styles.cardFooter}>
-                <button 
+            return (
+              <div
+                key={project.id}
+                className={`${styles.card} ${
+                  project.isArchived ? styles.archivedCard : ""
+                }`}
+              >
+                {canDeleteProject && (
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) => handleDelete(e, project.id, project.name)}
+                    title="Delete Project"
+                    disabled={isDeleting || isArchiving}
+                  >
+                    {isDeleting ? "…" : "\u00d7"}
+                  </button>
+                )}
+
+                <div className={styles.cardHeader}>
+                  <h4>{project.name}</h4>
+                  <span
+                    className={`${styles.tag} ${
+                      project.isArchived ? styles.archivedTag : ""
+                    }`}
+                  >
+                    {project.isArchived ? "Archived" : "Active"}
+                  </span>
+                </div>
+                <p className={styles.desc}>
+                  {project.description || "No description provided."}
+                </p>
+                <div className={styles.cardFooter}>
+                  <button
                     className={styles.viewBtn}
-                    onClick={() => {
-                      handleOpenProject(project.id);
-                    }}
+                    onClick={() => handleOpenProject(project.id)}
+                    disabled={isDeleting || isArchiving}
                   >
                     Open Project
-                </button>
+                  </button>
+                  {canManageProject && (
+                    <button
+                      className={styles.archiveBtn}
+                      disabled={isDeleting || isArchiving}
+                      onClick={(e) =>
+                        handleArchiveToggle(
+                          e,
+                          project.id,
+                          project.name,
+                          Boolean(project.isArchived)
+                        )
+                      }
+                    >
+                      {isArchiving
+                        ? project.isArchived
+                          ? "Restoring..."
+                          : "Archiving..."
+                        : project.isArchived
+                          ? "Restore"
+                          : "Archive"}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className={styles.empty}>
-            <h4 className={styles.message}>No projects yet. Start by creating your first one!</h4>
+            <h4 className={styles.message}>{emptyMessage}</h4>
           </div>
         )}
       </div>

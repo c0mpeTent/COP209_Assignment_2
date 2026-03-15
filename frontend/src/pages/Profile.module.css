@@ -113,6 +113,36 @@
   margin-top: 30px;
 }
 
+.editBtn,
+.cancelBtn,
+.saveBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.editBtn,
+.saveBtn {
+  background: linear-gradient(135deg, #bb86fc, #8f5ce5);
+  color: #101010;
+}
+
+.cancelBtn {
+  background-color: #232323;
+  color: #f1f1f1;
+  border: 1px solid #3a3a3a;
+}
+
+.editBtn:hover,
+.cancelBtn:hover,
+.saveBtn:hover {
+  transform: translateY(-1px);
+}
+
 .infoGroup {
   display: flex;
   align-items: center; /* Vertically centers the label with the box */
@@ -142,4 +172,136 @@
   font-size: 1rem;
   text-align: left; /* Text stays left-aligned inside the box */
   margin: 0;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+}
+
+.modalCard {
+  width: min(100%, 600px);
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 18px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  padding: 30px;
+  /* padding-right : 50px; */
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.modalTitle {
+  color: #f8f8f8;
+  font-size: 1.4rem;
+  margin: 0 0 6px;
+}
+
+.modalSubtitle {
+  color: #8d8d8d;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  color: #b5b5b5;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalLabel {
+  color: #9b9b9b;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.modalInput {
+  width: 95%;
+  background-color: #121212;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 13px 14px;
+  color: #f5f5f5;
+  font-size: 0.98rem;
+}
+
+.modalInput:focus {
+  outline: none;
+  border-color: #bb86fc;
+  box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.18);
+}
+
+.formError {
+  margin: 0;
+  color: #ff7777;
+  font-size: 0.9rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .profileContainer {
+    left: 0;
+    width: 100%;
+    padding: 16px;
+  }
+
+  .card {
+    padding: 28px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .infoGroup {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .modalCard {
+    padding: 22px 18px;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .editBtn,
+  .cancelBtn,
+  .saveBtn {
+    width: 100%;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Profile.module.css";
 
@@ -8,12 +8,65 @@ interface UserProfile {
   avatarUrl?: string; // Support for display 
 }
 
+interface ProfileFormState {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+const getResolvedAvatarUrl = (avatarUrl?: string) => {
+  if (!avatarUrl) return "";
+
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    if (avatarUrl.includes("undefined/uploads/")) {
+      return avatarUrl.replace(
+        "undefined/uploads/",
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`,
+      );
+    }
+
+    return avatarUrl;
+  }
+
+  if (avatarUrl.startsWith("undefined/uploads/")) {
+    return avatarUrl.replace(
+      "undefined/uploads/",
+      `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`,
+    );
+  }
+
+  if (avatarUrl.startsWith("/uploads/")) {
+    return `${import.meta.env.VITE_BACKEND_ORIGIN}${avatarUrl}`;
+  }
+
+  if (avatarUrl.startsWith("uploads/")) {
+    return `${import.meta.env.VITE_BACKEND_ORIGIN}/${avatarUrl}`;
+  }
+
+  return avatarUrl;
+};
+
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [formState, setFormState] = useState<ProfileFormState>({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [formError, setFormError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("token");
+    navigate("/auth");
+  }, [navigate]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -36,12 +89,23 @@ const Profile: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchProfile();
-}); // Added missing dependency array to prevent infinite loop
+    void fetchProfile();
+  }, [handleLogout]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth");
+  const openEditModal = () => {
+    setFormState({
+      name: user?.name ?? "",
+      email: user?.email ?? "",
+      password: "",
+      confirmPassword: "",
+    });
+    setFormError("");
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setFormError("");
+    setIsEditModalOpen(false);
   };
 
   const triggerFileSelect = () => fileInputRef.current?.click();
@@ -87,6 +151,53 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleProfileUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!formState.name.trim() || !formState.email.trim()) {
+      setFormError("Name and email are required.");
+      return;
+    }
+
+    if (formState.password && formState.password !== formState.confirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setFormError("");
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/profile/update`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: formState.name.trim(),
+          email: formState.email.trim(),
+          password: formState.password.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(data.message || "Could not update profile.");
+        return;
+      }
+
+      setUser(data.user);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      setFormError("Profile update failed. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading) return <div className={styles.loading}>Loading Profile...</div>;
 
   return (
@@ -100,7 +211,16 @@ const Profile: React.FC = () => {
         >
           <div className={styles.avatarCircle}>
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Avatar" className={styles.avatarImg} />
+              <img
+                src={getResolvedAvatarUrl(user.avatarUrl)}
+                alt="Avatar"
+                className={styles.avatarImg}
+                onError={() =>
+                  setUser((currentUser) =>
+                    currentUser ? { ...currentUser, avatarUrl: "" } : currentUser,
+                  )
+                }
+              />
             ) : (
               user?.name.charAt(0).toUpperCase()
             )}
@@ -135,9 +255,97 @@ const Profile: React.FC = () => {
         </div>
 
         <div className={styles.actionSection}>
-          <button className={styles.editBtn}>Edit Profile</button>
+          <button className={styles.editBtn} onClick={openEditModal}>Edit Profile</button>
         </div>
       </main>
+
+      {isEditModalOpen && (
+        <div className={styles.modalOverlay} onClick={closeEditModal}>
+          <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 className={styles.modalTitle}>Edit Profile</h2>
+                <p className={styles.modalSubtitle}>Update your account details.</p>
+              </div>
+              <button className={styles.closeBtn} onClick={closeEditModal} type="button">
+                ×
+              </button>
+            </div>
+
+            <form className={styles.modalForm} onSubmit={handleProfileUpdate}>
+              <div className={styles.formField}>
+                <label className={styles.modalLabel}>Name</label>
+                <input
+                  className={styles.modalInput}
+                  type="text"
+                  value={formState.name}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, name: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.modalLabel}>Email</label>
+                <input
+                  className={styles.modalInput}
+                  type="email"
+                  value={formState.email}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, email: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.modalLabel}>New Password</label>
+                <input
+                  className={styles.modalInput}
+                  type="password"
+                  value={formState.password}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, password: event.target.value }))
+                  }
+                  placeholder="Leave blank to keep current password"
+                />
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.modalLabel}>Confirm Password</label>
+                <input
+                  className={styles.modalInput}
+                  type="password"
+                  value={formState.confirmPassword}
+                  onChange={(event) =>
+                    setFormState((current) => ({
+                      ...current,
+                      confirmPassword: event.target.value,
+                    }))
+                  }
+                  placeholder="Repeat new password"
+                />
+              </div>
+
+              {formError && <p className={styles.formError}>{formError}</p>}
+
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.cancelBtn}
+                  type="button"
+                  onClick={closeEditModal}
+                >
+                  Cancel
+                </button>
+                <button className={styles.saveBtn} type="submit" disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -24,3 +24,10 @@ wiring for create task
 create kanban column
 delete kanban column
 handleUpdateWip in Kanban Column
+handle edit task in workflow board
+drag and drop 
+comments adding and deleting 
+comments tagging users
+notification 
+side bar for each task for a user 
+
