@@ -1,2 +1,2 @@
-# COP209_Assignment_2
+# COP290_Assignment_2
 Task Management application
