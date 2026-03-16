@@ -13,6 +13,7 @@ import authRoutes from './routes/authRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import {addAuthenticateUser} from './controllers/authController.js';
+import { updateAvatar } from './controllers/profileController.js';
 
 
 const app = express();
@@ -51,8 +52,8 @@ const upload = multer(
 
 
 
-// profile: update profile
-app.use("/api/profile", addAuthenticateUser, upload.single("avatar"), profileRoutes);
+// profile: update avatar 
+app.post("/api/profile/update-avatar", addAuthenticateUser, upload.single("avatar"), updateAvatar);
 
 app.use(express.json({ limit: '10mb' })); // Increase from default 100kb
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -84,7 +85,8 @@ app.use("/api/auth", authRoutes);
 // project: create, get, update, delete projects
 app.use("/api/project", addAuthenticateUser, projectRoutes);
 
-
+// profile: update profile
+app.use("/api/profile", addAuthenticateUser, profileRoutes);
 
 // 3. Start Listening
 app.listen(PORT, () => {
