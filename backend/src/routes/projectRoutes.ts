@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createProject , deleteProject , getProjects, getProject, setProjectDescription } from "../controllers/projectController.js";
+import { createProject , deleteProject , getProjects, getProject , updateProject, changeProjectArchive } from "../controllers/projectController.js";
 import { addProjectMember , changeProjectMemberRole , deleteProjectMember } from "../controllers/projectMemberController.js";
 import { createWorkflow , createTask , getWorkflow , deleteTask } from "../controllers/projectWorkflowController.js";
 const router = Router();
@@ -9,7 +9,9 @@ router.post("/create", createProject);
 router.get("/get", getProjects);
 router.delete("/delete/:projectId",deleteProject);
 router.get("/get-project/:projectId",getProject);
-router.patch("/set-project-description",setProjectDescription);
+// router.patch("/set-project-description",setProjectDescription);
+router.patch("/update/:projectId",updateProject);
+router.patch("/archive/:projectId",changeProjectArchive);
 
 router.post("/add-member",addProjectMember);
 router.patch("/change-member-role",changeProjectMemberRole);
