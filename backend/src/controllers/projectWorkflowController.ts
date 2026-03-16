@@ -185,7 +185,7 @@ export const createTask = async (req: Request, res: Response) => {
                 title: taskName,
                 description: taskDescription,
                 type: taskType,
-                status: taskStatus,
+                statusId: taskStatus,
                 priority: taskPriority,
                 dueDate: parsedDate,
                 boardId: workflowId,
@@ -337,7 +337,7 @@ export const addColumn = async (req : Request, res : Response) => {
         if (userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
             return res.status(403).json({ message: "User does not have permission to add column" });
         }
-        const newColumn = prisma.column.create({
+        const newColumn = await prisma.column.create({
             data:{
                 name : title,
                 order : order,

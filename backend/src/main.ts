@@ -6,12 +6,14 @@ import { PrismaClient } from '@prisma/client';
 import multer from "multer";
 import path from "path";
 
+dotenv.config();
+
 
 import authRoutes from './routes/authRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import {addAuthenticateUser} from './controllers/authController.js';
-dotenv.config();
+
 
 const app = express();
 const prisma = new PrismaClient();
@@ -57,7 +59,16 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 
 // 1. Connect to Database
-await prisma.$connect();
+const connectToDataBase = async () => {
+  try{
+    await prisma.$connect();
+    console.log("db connected");
+  }catch (error){
+    console.error("Error connecting to database:", error);
+    process.exit(1);
+  }
+}
+connectToDataBase();
 
 
 
