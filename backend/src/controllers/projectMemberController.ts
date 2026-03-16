@@ -1,14 +1,16 @@
 import type { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
+import type {ProjectRole} from "@prisma/client"
+import type { AuthenticatedRequest } from "../types/auth.js";
 
 export const addProjectMember = async ( req : Request, res : Response) => {
     try {
-        const admin = (req as any ) .user;
+        const admin = (req as AuthenticatedRequest).user;
         const memberEmail = req.body.memberEmail;
         const projectId = req.body.projectId;
-        console.log(admin);
-        console.log(memberEmail);
-        console.log(projectId);
+        // console.log(admin);
+        // console.log(memberEmail);
+        // console.log(projectId);
         const member = await prisma.user.findUnique({
             where: {
                 email: memberEmail
@@ -34,7 +36,7 @@ export const addProjectMember = async ( req : Request, res : Response) => {
         if ( project.members.some((m) => m.userId === member.id) ){
             return res.status(400).json({ message: "Member already exists" });
         }
-        console.log("point 1");
+        // console.log("point 1");
         const projectMember = await prisma.projectMember.create({
             data: {
                 projectId: projectId,
@@ -51,7 +53,7 @@ export const addProjectMember = async ( req : Request, res : Response) => {
 
 export const changeProjectMemberRole = async (req : Request  , res : Response)=>{
     try {
-        const admin = (req as any ) .user;
+        const admin = (req as AuthenticatedRequest ) .user;
         const memberEmail = req.body.memberEmail;
         const projectId = req.body.projectId;
         const role = req.body.role;
