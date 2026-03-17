@@ -833,3 +833,296 @@ export const addColumn = async (req : Request, res : Response) => {
     }
 }
 
+export const updateColumn = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const columnId = req.params.columnId;
+
+    if (!workflowId || !columnId) {
+      return res.status(400).json({ message: "Workflow ID and column ID are required" });
+    }
+
+    const workflow = await prisma.board.findUnique({
+      where: {
+        id: workflowId as string
+      }
+    });
+    if (!workflow) {
+      return res.status(404).json({ message: "Workflow not found" });
+    }
+    const userMember = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: user.id,
+          projectId: workflow.projectId
+        }
+      }
+    });
+    if (!userMember) {
+      return res.status(403).json({ message: "User is not a member of this project" });
+    };
+    const userRole = userMember.role;
+    if ( userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
+      return res.status(403).json({ message: "User does not have permission to update column" });
+    }
+    const column = await prisma.column.findUnique({
+      where: {
+        id: columnId as string
+      }
+    });
+    if (!column) {
+      return res.status(404).json({ message: "Column not found" });
+    }
+
+    const data: Prisma.ColumnUncheckedUpdateInput = {};
+    if (typeof req.body.title === "string" && req.body.title.trim()) {
+      data.name = req.body.title.trim();
+    }
+
+    if (req.body.wipLimit !== undefined) {
+      data.wipLimit = Number(req.body.wipLimit);
+    }
+
+    if (req.body.order !== undefined) {
+      data.order = Number(req.body.order);
+    }
+
+    const updatedColumn = await prisma.column.update({
+      where: {
+        id: columnId as string,
+      },
+      data,
+    });
+
+    return res.status(200).json(updatedColumn);
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const reorderColumns = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const columnIds = req.body.columnIds as string[];
+    // console.log(columnIds);
+    if (!workflowId || !Array.isArray(columnIds) || columnIds.length === 0) {
+      return res.status(400).json({ message: "Workflow ID and column order are required" });
+    }
+
+    const workflow = await prisma.board.findUnique({
+      where: {
+        id: workflowId as string,
+      },
+    });
+    if (!workflow) {
+      return res.status(404).json({ message: "Workflow not found" });
+    };
+    const userMember = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: user.id,
+          projectId: workflow.projectId,
+        },
+      },
+    });
+    if (!userMember) {
+      return res.status(403).json({ message: "User is not a member of this workflow" });
+    };
+    const userRole = userMember.role;
+
+    if (userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
+      return res.status(403).json({ message: "User does not have permission to reorder columns" });
+    }
+
+    const existingColumns = await prisma.column.findMany({
+      where: {
+        boardId: workflowId as string,
+      },
+    });
+
+    if (existingColumns.length !== columnIds.length) {
+      return res.status(400).json({ message: "Column order does not match the board" });
+    }
+
+    const existingIds = new Set(existingColumns.map((column) => column.id));
+    const hasInvalidColumn = columnIds.some((columnId) => !existingIds.has(columnId));
+    if (hasInvalidColumn) {
+      return res.status(400).json({ message: "Invalid column order provided" });
+    }
+
+    await prisma.$transaction(
+      getColumnOrderUpdates(columnIds).map(({ id, order }) =>
+        prisma.column.update({
+          where: {
+            id,
+          },
+          data: {
+            order,
+          },
+        })
+      )
+    );
+
+    return res.status(200).json({ message: "Column order updated successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteColumn = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const columnId = req.params.columnId;
+
+    if (!workflowId || !columnId) {
+      return res.status(400).json({ message: "Workflow ID and column ID are required" });
+    }
+
+    const workflow = await prisma.board.findUnique({
+      where: {
+        id: workflowId as string,
+      },
+    });
+    if (!workflow) {
+      return res.status(404).json({ message: "Workflow not found" });
+    };
+    const userMember = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: user.id,
+          projectId: workflow.projectId,
+        },
+      },
+    });
+    if (!userMember) {
+      return res.status(403).json({ message: "User is not a member of this workflow" });
+    };
+    const userRole = userMember.role;
+
+    if (userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
+      return res.status(403).json({ message: "User does not have permission to reorder columns" });
+    }
+
+    const column = await prisma.column.findUnique({
+      where: {
+        id: columnId as string,
+      },
+    });
+    if (!column) {
+      return res.status(404).json({ message: "Column not found" });
+    }
+
+    const Columns = await prisma.column.count({
+      where: {
+        boardId: workflowId as string,
+      },
+    });
+
+    if (Columns <= 1) {
+      return res.status(400).json({ message: "A board must have at least one column" });
+    }
+
+    const taskCount = await prisma.task.count({
+      where: {
+        statusId: columnId as string,
+      },
+    });
+
+    if (taskCount > 0) {
+      return res.status(400).json({ message: "Move tasks out of this column before deleting it" });
+    }
+
+    await prisma.column.delete({
+      where: {
+        id: columnId as string,
+      },
+    });
+
+    const columnsAfterDelete = await prisma.column.findMany({
+      where: {
+        boardId: workflowId as string,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    });
+
+    await prisma.$transaction(
+      columnsAfterDelete.map((currentColumn, index) =>
+        prisma.column.update({
+          where: {
+            id: currentColumn.id,
+          },
+          data: {
+            order: index,
+          },
+        })
+      )
+    );
+
+    return res.status(200).json({ message: "Column deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteWorkflow = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+
+    if (!workflowId) {
+      return res.status(400).json({ message: "Workflow ID is required" });
+    }
+
+    const workflow = await prisma.board.findUnique({
+      where: {
+        id: workflowId as string,
+      },
+    });
+    if (!workflow) {
+      return res.status(404).json({ message: "Workflow not found" });
+    };
+    const userMember = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: user.id,
+          projectId: workflow.projectId,
+        },
+      },
+    });
+    if (!userMember) {
+      return res.status(403).json({ message: "User is not a member of this workflow" });
+    };
+    const userRole = userMember.role;
+
+    if (userRole === "PROJECT_VIEWER" || userRole === "PROJECT_MEMBER") {
+      return res.status(403).json({ message: "User does not have permission to delete workflow" });
+    }
+
+    await prisma.task.deleteMany({
+      where: {
+        boardId: workflowId as string,
+      },
+    });
+
+    await prisma.column.deleteMany({
+      where: {
+        boardId: workflowId as string,
+      },
+    });
+
+    await prisma.board.delete({
+      where: {
+        id: workflowId as string,
+      },
+    });
+
+    return res.status(200).json({ message: "Workflow deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

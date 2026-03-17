@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createProject , deleteProject , getProjects, getProject , updateProject, changeProjectArchive } from "../controllers/projectController.js";
 import { addProjectMember , changeProjectMemberRole , deleteProjectMember } from "../controllers/projectMemberController.js";
-import { createWorkflow , createTask , getWorkflow , deleteTask  , getTaskDetails , updateWorkflow , changeTask , addColumn} from "../controllers/projectWorkflowController.js";
+import { createWorkflow , createTask , getWorkflow , deleteTask  , getTaskDetails , updateWorkflow , changeTask , addColumn,updateColumn,reorderColumns,deleteColumn,deleteWorkflow} from "../controllers/projectWorkflowController.js";
 const router = Router();
 
 // URL will be POST /api/project/
@@ -25,6 +25,10 @@ router.post("/add-task",createTask);
 router.patch("/update-task/:workflowId/:taskId", changeTask);
 router.delete("/delete-task/:workflowId/:taskId",deleteTask);
 router.post("/add-column/:workflowId", addColumn);
+router.patch("/update-column/:workflowId/:columnId", updateColumn);
+router.patch("/reorder-columns/:workflowId", reorderColumns);
+router.delete("/delete-column/:workflowId/:columnId", deleteColumn);
+router.delete("/delete-workflow/:workflowId", deleteWorkflow);
 
 
 export default router;
