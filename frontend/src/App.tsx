@@ -13,8 +13,8 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import WorkflowBoard from './pages/WorkflowBoard';
-import Notifications from './pages/Notifications';
-import TaskDetails from './pages/TaskDetails';
+//import Notifications from './pages/Notifications';
+//import TaskDetails from './pages/TaskDetails';
 
 
 function App() {
@@ -78,7 +78,7 @@ function App() {
             )
           } 
         />
-        <Route 
+        {/* <Route 
           path="/project/:projectId/workflow/:workflowId/task/:taskId"
           element={
             isAuthenticated ? (
@@ -89,7 +89,7 @@ function App() {
               <Navigate to="/auth" />
             )
           }
-        />
+        /> */}
         <Route 
           path="/project/:projectId/workflow/:workflowId" 
           element={
@@ -114,7 +114,7 @@ function App() {
             )
           } 
         />
-        <Route
+        {/* <Route
           path="/notifications"
           element={
             isAuthenticated ? (
@@ -125,7 +125,7 @@ function App() {
               <Navigate to="/auth" />
             )
           }
-        />
+        /> */}
 
         {/* default path: if logged in, go to dashboard; else, go to auth */}
         <Route 
