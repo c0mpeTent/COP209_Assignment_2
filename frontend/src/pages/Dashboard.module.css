@@ -209,9 +209,9 @@
   background-color: #121212;
   position: fixed;
   top: 0;
-  left: 260px; /* Same as Profile */
+  left: 300px; /* Same as Profile */
   height: 100vh;
-  width: calc(100% - 260px); 
+  width: calc(100% - 300px); 
   color: #e0e0e0;
   overflow-y: auto; /* Allows scrolling if you have many projects */
   z-index: 1;
