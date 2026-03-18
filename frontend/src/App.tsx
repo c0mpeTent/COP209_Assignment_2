@@ -13,6 +13,9 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import WorkflowBoard from './pages/WorkflowBoard';
+import Notifications from './pages/Notifications';
+import TaskDetails from './pages/TaskDetails';
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // 'null' means "loading"
@@ -76,6 +79,18 @@ function App() {
           } 
         />
         <Route 
+          path="/project/:projectId/workflow/:workflowId/task/:taskId"
+          element={
+            isAuthenticated ? (
+              <Layout>
+                <TaskDetails />
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route 
           path="/project/:projectId/workflow/:workflowId" 
           element={
             isAuthenticated ? (
@@ -98,6 +113,18 @@ function App() {
               <Navigate to="/auth" />
             )
           } 
+        />
+        <Route
+          path="/notifications"
+          element={
+            isAuthenticated ? (
+              <Layout>
+                <Notifications />
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
         />
 
         {/* default path: if logged in, go to dashboard; else, go to auth */}
