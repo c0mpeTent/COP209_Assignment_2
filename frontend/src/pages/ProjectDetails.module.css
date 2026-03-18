@@ -1,30 +1,125 @@
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-right: 20px;
+  box-sizing: border-box;
 }
 
 .projectHeader {
   margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .projectName {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 800;
   margin: 0;
   color: #ffffff;
 }
 
 .projectMeta {
+  font-size: 1rem;
   color: #888;
   margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  margin-top: o.75rem;
+  font-size: 0.50rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activeBadge {
+  background: rgba(40, 167, 69, 0.12);
+  color: #58d27d;
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.archivedBadge {
+  background: rgba(243, 201, 107, 0.12);
+  color: #f3c96b;
+  border-color: rgba(243, 201, 107, 0.28);
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.editProjectBtn,
+.archiveBtn,
+.restoreBtn {
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.editProjectBtn {
+  background: transparent;
+  color: #bb86fc;
+  border-color: rgba(187, 134, 252, 0.4);
+}
+
+.editProjectBtn:hover {
+  background: rgba(187, 134, 252, 0.12);
+}
+
+.archiveBtn {
+  background: rgba(255, 85, 85, 0.08);
+  color: #ff8686;
+  border-color: rgba(255, 85, 85, 0.22);
+}
+
+.archiveBtn:hover {
+  background: rgba(255, 85, 85, 0.16);
+}
+
+.restoreBtn {
+  background: rgba(187, 134, 252, 0.12);
+  color: #bb86fc;
+  border-color: rgba(187, 134, 252, 0.3);
+}
+
+.restoreBtn:hover {
+  background: rgba(187, 134, 252, 0.2);
 }
 
 .layoutGrid {
   margin-left: 20px;
   display: grid;
-  grid-template-columns: 1fr 350px; /* Big column and fixed sidebar */
+  grid-template-columns: 1fr 350px;
   gap: 2rem;
   align-items: start;
+  width: calc(100% - 20px);
+  box-sizing: border-box;
+}
+
+.mainCol {
+  min-width: 0;
+}
+
+.sideCol {
+  min-width: 0;
 }
 
 .loader {
@@ -37,16 +132,6 @@
   font-weight: bold;
 }
 
-@media (max-width: 1100px) {
-  .layoutGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .sideCol {
-    order: 2; /* Team moves below workflows on small screens */
-  }
-}
-
 .descriptionBox {
   background: #1e1e1e;
   border: 1px solid #333;
@@ -54,7 +139,8 @@
   padding: 20px;
   margin: 20px 0;
   margin-left: 20px;
-  width: 1075px;
+  width: calc(100% - 20px);
+  box-sizing: border-box;
 }
 
 .descHeader {
@@ -62,6 +148,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  gap: 1rem;
 }
 
 .descHeader label {
@@ -71,12 +158,9 @@
   text-transform: uppercase;
 }
 
-.editBtn {
-  background: transparent;
-  border: none;
-  color: #bb86fc;
-  cursor: pointer;
-  font-size: 0.9rem;
+.readOnlyNote {
+  color: #f3c96b;
+  font-size: 0.85rem;
 }
 
 .descText {
@@ -85,38 +169,145 @@
   margin: 0;
 }
 
-.descInput {
-  width: 100%;
-  min-height: 100px;
-  background: #2c333a;
-  border: 1px solid #444;
-  border-radius: 4px;
-  color: #fff;
-  padding: 10px;
-  font-family: inherit;
-  resize: vertical;
-}
-
-.editActions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
 .saveBtn {
   background: #0052cc;
   color: white;
   border: none;
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.saveBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .cancelBtn {
   background: transparent;
   color: #dfe1e6;
   border: 1px solid #444;
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.modalCard {
+  width: min(600px, 100%);
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2rem;
+}
+
+.modalSubtitle {
+  margin: 0.35rem 0 0 0;
+  color: #9d9d9d;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 1.75rem;
+  cursor: pointer;
+  padding-top: 10px;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.modalLabel {
+  color: #c9c9c9;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.modalInput,
+.modalTextarea {
+  width: 95%;
+  background: #121212;
+  border: 1px solid #444;
+  border-radius: 10px;
+  color: #ffffff;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.modalInput:focus,
+.modalTextarea:focus {
+  border-color: #bb86fc;
+}
+
+.modalTextarea {
+  font-size: 0.90rem;
+  min-height: 130px;
+  resize: vertical;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.formError {
+  color: #ff8686;
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+    width: calc(100% - 20px);
+  }
+
+  .sideCol {
+    order: 2;
+  }
+
+  .projectHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .descriptionBox {
+    width: calc(100% - 20px);
+    margin-right: 20px;
+  }
 }
