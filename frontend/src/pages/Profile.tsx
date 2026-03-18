@@ -73,7 +73,7 @@ const Profile: React.FC = () => {
       try {
         const response = await fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/auth/me",  {
             method: "GET",
-            credentials: "include", // Include cookies for session management
+            credentials: "include", // include cookies for session management
           });
 
         if (response.ok) {

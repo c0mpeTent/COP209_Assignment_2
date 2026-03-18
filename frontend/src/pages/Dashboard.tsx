@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ProjectList from "../components/ProjectList"; // We'll create this next
+import ProjectList from "../components/ProjectList";
 import styles from "./Dashboard.module.css";
 
 export interface Project {
