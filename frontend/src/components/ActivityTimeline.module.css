@@ -1,0 +1,131 @@
+.panel {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.subtitle {
+  margin: 0.45rem 0 0 0;
+  color: #979797;
+  line-height: 1.5;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.eventCard {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.eventMarker {
+  width: 10px;
+  height: 10px;
+  margin-top: 0.55rem;
+  border-radius: 50%;
+  background: #bb86fc;
+  box-shadow: 0 0 0 5px rgba(187, 134, 252, 0.12);
+  flex-shrink: 0;
+}
+
+.eventBody {
+  width: 100%;
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+}
+
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.eventActor {
+  color: #ffffff;
+}
+
+.eventTime {
+  color: #8b8b8b;
+  font-size: 0.85rem;
+}
+
+.eventMessage {
+  margin: 0.55rem 0 0 0;
+  color: #dbdbdb;
+  line-height: 1.6;
+}
+
+.changeRow {
+  margin-top: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.oldValue,
+.newValue {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  border: 1px solid #3a3a3a;
+}
+
+.oldValue {
+  color: #f3c96b;
+  background: rgba(243, 201, 107, 0.08);
+}
+
+.newValue {
+  color: #bb86fc;
+  background: rgba(187, 134, 252, 0.1);
+}
+
+.arrow {
+  color: #7f7f7f;
+}
+
+.mentions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mentionChip {
+  border-radius: 999px;
+  padding: 0.32rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #bb86fc;
+  background: rgba(187, 134, 252, 0.12);
+  border: 1px solid rgba(187, 134, 252, 0.25);
+}
+
+.emptyState {
+  color: #8f8f8f;
+  border: 1px dashed #3a3a3a;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
