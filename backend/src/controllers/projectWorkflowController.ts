@@ -5,9 +5,89 @@ import { type Comment ,type Column , type Prisma , type ProjectRole , type Task 
 import { deriveStoryStatusId, getColumnOrderUpdates , getLifecycleDatesForStatus, parseDueDate } from "../lib/workflowUtils.js";
 import type { AuthenticatedRequest } from "../types/auth.js";
 import { serialize } from "node:v8";
-import { type } from "node:os";
+import {
+  buildTaskNotificationPath,
+  createNotifications,
+} from "../lib/notificationService.js";
+type TaskWithRelation = PrismaTask& {assignee: User | null ; reporter: User | null};
+type TaskHistoryEventType =
+  | "STATUS_CHANGE"
+  | "ASSIGNEE_CHANGE"
+  | "COMMENT_ADDED"
+  | "COMMENT_EDITED"
+  | "COMMENT_DELETED";
 
-type TaskWithRelation = PrismaTask& {assignee: User | null ; reporter: User | null}
+type MentionedUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+type TaskHistoryEntry = {
+  event: TaskHistoryEventType;
+  createdAt: string;
+  actorId: string;
+  actorName: string;
+  message: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  commentId?: string;
+  mentions?: MentionedUser[];
+};
+
+const buildHistoryEntry = (
+  event: TaskHistoryEventType,
+  actor: Pick<User, "id" | "name">,
+  message: string,
+  options: {
+    oldValue?: string | null;
+    newValue?: string | null;
+    commentId?: string;
+    mentions?: MentionedUser[];
+  } = {}
+): TaskHistoryEntry => ({
+  event,
+  createdAt: new Date().toISOString(),
+  actorId: actor.id,
+  actorName: actor.name,
+  message,
+  ...(options.oldValue !== undefined ? { oldValue: options.oldValue } : {}),
+  ...(options.newValue !== undefined ? { newValue: options.newValue } : {}),
+  ...(options.commentId ? { commentId: options.commentId } : {}),
+  ...(options.mentions && options.mentions.length > 0
+    ? { mentions: options.mentions }
+    : {}),
+});
+
+const appendTaskHistory = async (taskId: string, entry: TaskHistoryEntry) => {
+  const task = await prisma.task.findUnique({
+    where: {
+      id: taskId,
+    },
+    select: {
+      history: true,
+    },
+  });
+
+  const existingHistory = (task?.history ?? []).filter(
+    (historyEntry): historyEntry is Exclude<Prisma.JsonValue, null> => historyEntry !== null
+  );
+
+  await prisma.task.update({
+    where: {
+      id: taskId,
+    },
+    data: {
+      history: [
+        ...(existingHistory as Prisma.InputJsonValue[]),
+        entry as Prisma.InputJsonValue,
+      ],
+      updatedAt: new Date(),
+    },
+  });
+};
+
+
 
 const serializeUser = (user: User) => ({
   id: user.id,
@@ -367,13 +447,15 @@ export const getTaskDetails = async (req : Request , res : Response) => {
         if (!workflow) {
             return res.status(404).json({ message: "Workflow not found" });
         }
-        const task = await prisma.task.findUnique(
-            {
-                where: {
-                    id : taskId as string
-                }
+        const task = await prisma.task.findUnique({
+            where: {
+                id : taskId as string
+            },
+            include: {
+                assignee: true,
+                reporter: true
             }
-        );
+        });
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
@@ -412,7 +494,7 @@ export const getTaskDetails = async (req : Request , res : Response) => {
         res.status(200).json(
             {
                 id : task.id,
-                task : serialize(task),
+                task : serializeTask(task),
                 workflowName : workflow.name,
                 projectId : project.id,
                 userRole : userRole,
@@ -514,14 +596,18 @@ export const createTask = async (req: Request, res: Response) => {
         if (userRole === "PROJECT_VIEWER") {
             return res.status(403).json({ message: "User does not have permission to create tasks" });
         }
-        const assigneeObject = await prisma.user.findUnique(
+     
+       
+        const assigneeObject = (assignEmail) ? await prisma.user.findUnique(
             {
                 where:{
                     email: assignEmail
                 }
             }
-        );
-        const assigneeId = assigneeObject?.id ?? null;
+        ) : null;
+        if (assignEmail && !assigneeObject) return res.status(403).json({message: "assignee not found "});
+        const assigneeId = assigneeObject?.id??null;
+
         const parsedDate = parseDueDate(taskDueDate);
         
         if (taskType == "STORY" && parentStoryId){
@@ -575,6 +661,19 @@ export const createTask = async (req: Request, res: Response) => {
                 reporter: true
             }
         });
+
+        if (assigneeObject) {
+          await createNotifications({
+            type: "TASK_ASSIGNED",
+            message: `${user.name} assigned you to ${task.title}`,
+            userIds: [assigneeObject.id],
+            actorId: user.id,
+            projectId: workflow.projectId,
+            workflowId,
+            taskId: task.id,
+            targetPath: buildTaskNotificationPath(workflow.projectId, workflowId, task.id),
+          });
+        }
         if (taskType !== "STORY" && parentStoryId) {
             await syncStoryStatus(parentStoryId);
         }
@@ -699,14 +798,25 @@ export const changeTask = async (req : Request, res : Response) => {
         const exitingTask = await prisma.task.findUnique({
             where:{
                 id : taskId as string
+            },
+            include: {
+              assignee: true
             }
             
         });
         if (!exitingTask) {
             return res.status(404).json({ message: "Task not found" });
         };
-
         const updateData: Prisma.TaskUncheckedUpdateInput = {};
+        let statusHistoryEntry: TaskHistoryEntry | null = null;
+        let assigneeHistoryEntry: TaskHistoryEntry | null = null;
+        let statusNotificationPayload:
+          | Parameters<typeof createNotifications>[0]
+          | null = null;
+        let assignmentNotificationPayload:
+          | Parameters<typeof createNotifications>[0]
+          | null = null;
+
         updateData.title = title;
         updateData.description = description;
         updateData.priority = priority;
@@ -742,8 +852,31 @@ export const changeTask = async (req : Request, res : Response) => {
             );
             updateData.resolvedAt = lifecycleDates.resolvedAt;
             updateData.closedAt = lifecycleDates.closedAt;
+
+            if (exitingTask.statusId !== nextColumn.id) {
+              statusHistoryEntry = buildHistoryEntry(
+                "STATUS_CHANGE",
+                user,
+                `${user.name} moved ${exitingTask.title} from ${currentColumn.name} to ${nextColumn.name}`,
+                {
+                  oldValue: currentColumn.name,
+                  newValue: nextColumn.name,
+                }
+              );
+
+              statusNotificationPayload = {
+                type: "TASK_STATUS_CHANGED",
+                message: `${user.name} moved ${exitingTask.title} to ${nextColumn.name}`,
+                userIds: [exitingTask.reporterId, exitingTask.assigneeId ?? ""],
+                actorId: user.id,
+                projectId: project.id,
+                workflowId,
+                taskId,
+                targetPath: buildTaskNotificationPath(project.id, workflowId, taskId),
+            };
+          };
         };
-        updateData.dueDate = dueDate||null;
+        updateData.dueDate = parseDueDate(dueDate);
 
         if ( assignee !== undefined){
             const assigneeObject = await prisma.user.findUnique({
@@ -752,6 +885,30 @@ export const changeTask = async (req : Request, res : Response) => {
                 }
             })
             updateData.assigneeId = assigneeObject?.id ?? null;
+            if (exitingTask.assigneeId !== (assigneeObject?.id ?? null)) {
+            assigneeHistoryEntry = buildHistoryEntry(
+              "ASSIGNEE_CHANGE",
+              user,
+              `${user.name} changed assignee from ${exitingTask.assignee?.name ?? "Unassigned"} to ${assigneeObject?.name ?? "Unassigned"}`,
+              {
+                oldValue: exitingTask.assignee?.name ?? null,
+                newValue: assigneeObject?.name ?? null,
+              }
+            );
+
+            if (assigneeObject) {
+              assignmentNotificationPayload = {
+                type: "TASK_ASSIGNED",
+                message: `${user.name} assigned you to ${exitingTask.title}`,
+                userIds: [assigneeObject.id],
+                actorId: user.id,
+                projectId: workflow.projectId,
+                workflowId,
+                taskId,
+                targetPath: buildTaskNotificationPath(workflow.projectId, workflowId, taskId),
+              };
+            };
+          };
         }
 
         const updatedTask = await prisma.task.update({
@@ -765,12 +922,28 @@ export const changeTask = async (req : Request, res : Response) => {
             },
         });
 
+        if (statusHistoryEntry) {
+          await appendTaskHistory(taskId, statusHistoryEntry);
+        }
+
+        if (assigneeHistoryEntry) {
+          await appendTaskHistory(taskId, assigneeHistoryEntry);
+        }
+
+        if (statusNotificationPayload) {
+          await createNotifications(statusNotificationPayload);
+        }
+
+        if (assignmentNotificationPayload) {
+          await createNotifications(assignmentNotificationPayload);
+        }
         if (updatedTask.parentStoryId){
             await syncStoryStatus(updatedTask.parentStoryId);
         }
         return res.status(200).json(serializeTask(updatedTask));
     } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+      console.error("Error updating task:", error);
+        res.status(500).json({ message: "Internal server error" , error});
     }
 }
 

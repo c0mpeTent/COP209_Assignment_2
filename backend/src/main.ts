@@ -12,6 +12,8 @@ dotenv.config();
 import authRoutes from './routes/authRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import {addAuthenticateUser} from './controllers/authController.js';
 import { updateAvatar } from './controllers/profileController.js';
 
@@ -87,6 +89,12 @@ app.use("/api/project", addAuthenticateUser, projectRoutes);
 
 // profile: update profile
 app.use("/api/profile", addAuthenticateUser, profileRoutes);
+
+// comment: create, get, update, delete comments
+app.use("/api/comment", addAuthenticateUser, commentRoutes);
+
+// notification: get, mark all read, mark specific read
+app.use("/api/notification", addAuthenticateUser, notificationRoutes);
 
 // 3. Start Listening
 app.listen(PORT, () => {
