@@ -1,0 +1,43 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.subtitle {
+  margin: 0.65rem 0 0 0;
+  color: #8b8b8b;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.panel {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.panelTitle {
+  margin: 0 0 0.8rem 0;
+  color: #bb86fc;
+  font-size: 1.25rem;
+}
+
+.panelText {
+  margin: 0;
+  color: #d2d2d2;
+  line-height: 1.6;
+}
