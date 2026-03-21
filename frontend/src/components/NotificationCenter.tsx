@@ -4,7 +4,14 @@ import styles from "./NotificationCenter.module.css";
 
 interface NotificationItem {
   id: string;
-  type: "TASK_ASSIGNED" | "TASK_STATUS_CHANGED" | "TASK_COMMENTED" | "TASK_MENTIONED";
+  type:
+    | "TASK_ASSIGNED"
+    | "TASK_STATUS_CHANGED"
+    | "TASK_COMMENTED"
+    | "TASK_MENTIONED"
+    | "TASK_DELETED"
+    | "TASK_CREATED"
+    | "TASK_LINKED_TO_STORY";
   message: string;
   isRead: boolean;
   projectId?: string | null;
@@ -19,6 +26,9 @@ const typeLabels: Record<NotificationItem["type"], string> = {
   TASK_STATUS_CHANGED: "Status",
   TASK_COMMENTED: "Comment",
   TASK_MENTIONED: "Mention",
+  TASK_DELETED: "Deleted",
+  TASK_CREATED: "Created",
+  TASK_LINKED_TO_STORY: "Assigned To Story",
 };
 
 const NotificationCenter: React.FC = () => {
@@ -27,6 +37,7 @@ const NotificationCenter: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [isClearingHistory, setIsClearingHistory] = useState(false);
   const [pendingNotificationId, setPendingNotificationId] = useState<string | null>(null);
 
   const loadNotifications = useCallback(async () => {
@@ -143,6 +154,41 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
+  const handleClearHistory = async () => {
+    const confirmed = window.confirm("Clear all notification history?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsClearingHistory(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification/clear-history`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not clear notification history");
+      }
+
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Could not clear notification history:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Could not clear notification history"
+      );
+    } finally {
+      setIsClearingHistory(false);
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading notifications...</div>;
   }
@@ -153,24 +199,26 @@ const NotificationCenter: React.FC = () => {
         <div>
           <h1 className={styles.title}>Notifications</h1>
           <p className={styles.subtitle}>
-            Your in-app notification center for assignments, status updates, comments, and mentions.
+            In-app notification center for assignments, status updates, comments, mentions and much more. Stay informed about all your project activities in one place.
           </p>
         </div>
         <div className={styles.headerActions}>
           <span className={styles.unreadBadge}>{unreadCount} unread</span>
-          <button
-            className={styles.markAllBtn}
-            onClick={() => void handleMarkAllAsRead()}
-            disabled={isMarkingAll || unreadCount === 0}
-          >
-            {isMarkingAll ? "Marking..." : "Mark All As Read"}
-          </button>
         </div>
       </div>
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Unread</h2>
+          <div className={styles.sectionHeaderLeft}>
+            <h2 className={styles.sectionTitle}>Unread</h2>
+            <button
+              className={styles.markAllBtn}
+              onClick={() => void handleMarkAllAsRead()}
+              disabled={isMarkingAll || unreadCount === 0}
+            >
+              {isMarkingAll ? "Marking..." : "Mark All As Read"}
+            </button>
+          </div>
           <span className={styles.sectionCount}>{groupedNotifications.unread.length}</span>
         </div>
         {groupedNotifications.unread.length === 0 ? (
@@ -202,7 +250,16 @@ const NotificationCenter: React.FC = () => {
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>History</h2>
+          <div className={styles.sectionHeaderLeft}>
+            <h2 className={styles.sectionTitle}>History</h2>
+            <button
+              className={styles.clearHistoryBtn}
+              onClick={() => void handleClearHistory()}
+              disabled={isClearingHistory || groupedNotifications.history.length === 0}
+            >
+              {isClearingHistory ? "Clearing..." : "Clear History"}
+            </button>
+          </div>
           <span className={styles.sectionCount}>{groupedNotifications.history.length}</span>
         </div>
         {groupedNotifications.history.length === 0 ? (
