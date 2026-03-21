@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
 
     const payload = {
       name: newProjectName,
-      description: "A new project management board",
+      description: "A new project ",
     };
 
     try {
