@@ -25,6 +25,7 @@ const renderMarkdown = (value: string) => {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/__([^_]+)__/g, "<u>$1</u>")
     .replace(
       /(^|\s)@([a-zA-Z0-9._-]+)/g,
       '$1<span class="commentMention">@$2</span>'
@@ -98,7 +99,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
         <div>
           <h2 className={styles.title}>Comments</h2>
           <p className={styles.subtitle}>
-            Supports `**bold**`, `*italic*`, `code`, line breaks, and mentions like{" "}
+            Supports `**bold**`, `*italic*`, `__underline__`, `code`, line breaks, and mentions like{" "}
             {mentionHints || "@username"}.
           </p>
         </div>

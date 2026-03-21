@@ -2,19 +2,19 @@
   width: 1400px;
   display: flex;
   min-height: 100vh;
-  background-color: #121212; /* Base Dark Mode Pro background */
+  background-color: #121212;
   color: #e0e0e0;
   
 }
 
 .mainWrapper {
   /* This MUST match the width of your Sidebar.tsx (260px) */
-  margin-left: 300px; 
+  margin-left: 250px; 
   width: 1200px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Prevents layout breaking on small screens */
+  min-width: 0; 
 }
 
 .topNav {

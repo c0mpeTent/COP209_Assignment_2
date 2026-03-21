@@ -12,7 +12,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ entries }) => {
       <div className={styles.header}>
         <h2 className={styles.title}>Activity Timeline</h2>
         <p className={styles.subtitle}>
-          Status changes, assignee updates, and comment activity are tracked here.
+          Status changes, direct edits, assignee updates, and comment activity are tracked here.
         </p>
       </div>
 
