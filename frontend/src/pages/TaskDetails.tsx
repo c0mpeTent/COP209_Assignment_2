@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ActivityTimeline from "../components/ActivityTimeline";
 import CommentThread from "../components/CommentThread";
+import { getDueDateDisplay } from "../utils/dueDate";
 import type {
   BoardMemberOption,
   PriorityType,
@@ -29,8 +30,74 @@ const formatDateForInput = (value?: string | null) => {
   return new Date(value).toISOString().split("T")[0];
 };
 
+const getResolvedAvatarUrl = (avatarUrl?: string) => {
+  if (!avatarUrl) {
+    return "";
+  }
+
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    if (avatarUrl.includes("undefined/uploads/")) {
+      return avatarUrl.replace(
+        "undefined/uploads/",
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`
+      );
+    }
+
+    return avatarUrl;
+  }
+
+  if (avatarUrl.startsWith("undefined/uploads/")) {
+    return avatarUrl.replace(
+      "undefined/uploads/",
+      `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`
+    );
+  }
+
+  if (avatarUrl.startsWith("/uploads/")) {
+    return `${import.meta.env.VITE_BACKEND_ORIGIN}${avatarUrl}`;
+  }
+
+  if (avatarUrl.startsWith("uploads/")) {
+    return `${import.meta.env.VITE_BACKEND_ORIGIN}/${avatarUrl}`;
+  }
+
+  return avatarUrl;
+};
+
+type AvatarNameProps = {
+  user?: Pick<Task, "assignee" | "reporter">["assignee"] | Pick<Task, "assignee" | "reporter">["reporter"];
+  fallbackText: string;
+};
+
+const AvatarName: React.FC<AvatarNameProps> = ({ user, fallbackText }) => {
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const resolvedAvatarUrl = getResolvedAvatarUrl(user?.avatarUrl);
+  const displayName = user?.name || fallbackText;
+
+  return (
+    <span className={styles.avatarName}>
+      {user ? (
+        <span className={styles.smallAvatarCircle}>
+          {resolvedAvatarUrl && !avatarLoadFailed ? (
+            <img
+              src={resolvedAvatarUrl}
+              alt={displayName}
+              className={styles.smallAvatarImage}
+              onError={() => setAvatarLoadFailed(true)}
+            />
+          ) : (
+            <span>{displayName[0]}</span>
+          )}
+        </span>
+      ) : null}
+      <span className={styles.personName}>{displayName}</span>
+    </span>
+  );
+};
+
 const TaskDetails: React.FC = () => {
-  const { workflowId, taskId } = useParams<{
+  const navigate = useNavigate();
+  const { projectId, workflowId, taskId } = useParams<{
     projectId: string;
     workflowId: string;
     taskId: string;
@@ -44,8 +111,13 @@ const TaskDetails: React.FC = () => {
   const [currentUserId, setCurrentUserId] = useState("");
   const [members, setMembers] = useState<BoardMemberOption[]>([]);
   const [columns, setColumns] = useState<TaskDetailsResponse["columns"]>([]);
+  const [childItems, setChildItems] = useState<Task[]>([]);
+  const [stories, setStories] = useState<Task[]>([]);
   const [formData, setFormData] = useState<TaskFormState | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+  const [selectedStoryId, setSelectedStoryId] = useState("");
+  const [isAssigningStory, setIsAssigningStory] = useState(false);
 
   const isReadOnly = viewerRole === "PROJECT_VIEWER";
 
@@ -75,6 +147,9 @@ const TaskDetails: React.FC = () => {
       setCurrentUserId(details.currentUserId);
       setMembers(details.members);
       setColumns(details.columns.sort((left, right) => left.order - right.order));
+      setChildItems(details.childItems ?? []);
+      setStories(details.stories ?? []);
+      setSelectedStoryId(details.task.parentStoryId ?? "");
       setFormData({
         title: details.task.title,
         description: details.task.description || "",
@@ -99,20 +174,15 @@ const TaskDetails: React.FC = () => {
     () => columns.find((column) => column.id === task?.status),
     [columns, task?.status]
   );
+  const dueDateDisplay = getDueDateDisplay(task?.dueDate);
 
   const statusOptions = useMemo(() => {
     if (!task) {
       return [];
     }
 
-    if (task.type === "STORY") {
-      return columns;
-    }
-
-    return columns.filter((column) =>
-      currentColumn ? column.order >= currentColumn.order : true
-    );
-  }, [columns, currentColumn, task]);
+    return columns;
+  }, [columns, task]);
 
   const priorityToneClass = useMemo(() => {
     switch (task?.priority) {
@@ -132,6 +202,21 @@ const TaskDetails: React.FC = () => {
   const historyEntries = useMemo<TaskHistoryEntry[]>(
     () => task?.history ?? [],
     [task?.history]
+  );
+
+  const currentStory = useMemo(
+    () => stories.find((story) => story.id === task?.parentStoryId) ?? null,
+    [stories, task?.parentStoryId]
+  );
+
+  const childItemsWithStatus = useMemo(
+    () =>
+      childItems.map((childItem) => ({
+        ...childItem,
+        statusLabel:
+          columns.find((column) => column.id === childItem.status)?.name || "Unknown",
+      })),
+    [childItems, columns]
   );
 
   const handleSaveTask = async (event: React.FormEvent) => {
@@ -239,6 +324,48 @@ const TaskDetails: React.FC = () => {
     await loadTaskDetails();
   };
 
+  const openStoryPage = () => {
+    if (!projectId || !workflowId || !currentStory) {
+      return;
+    }
+
+    navigate(`/project/${projectId}/workflow/${workflowId}/task/${currentStory.id}`);
+  };
+
+  const handleAssignStory = async () => {
+    if (!workflowId || !taskId || task?.type === "STORY") {
+      return;
+    }
+
+    try {
+      setIsAssigningStory(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-task/${workflowId}/${taskId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            parentStoryId: selectedStoryId || null,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not update story assignment");
+      }
+
+      await loadTaskDetails();
+      setIsStoryModalOpen(false);
+    } catch (error) {
+      console.error("Story assignment failed", error);
+      alert(error instanceof Error ? error.message : "Could not update story assignment");
+    } finally {
+      setIsAssigningStory(false);
+    }
+  };
+
   if (loading || !task || !formData) {
     return <div className={styles.loader}>Loading task details...</div>;
   }
@@ -247,33 +374,56 @@ const TaskDetails: React.FC = () => {
     <div className={styles.container}>
       <header className={`${styles.headerCard} ${priorityToneClass}`}>
         <div>
-          <p className={styles.eyebrow}>{workflowName}</p>
+          <p className={styles.eyebrow}> {task.type}</p>
           <h1 className={styles.title}>{task.title}</h1>
           <p className={styles.subtitle}>
-            {task.type} · Created by {task.reporter?.name || "Unknown"} · Last updated{" "}
-            {new Date(task.updatedAt).toLocaleString()}
+            <span>{workflowName}</span>
+            <span className={styles.subtitleDot}>·</span>
+            <span className={styles.subtitlePersonBlock}>
+              <span>Created by</span>
+              <AvatarName user={task.reporter} fallbackText="Unknown" />
+            </span>
+            <span className={styles.subtitleDot}>·</span>
+            <span>Last updated {new Date(task.updatedAt).toLocaleString()}</span>
           </p>
         </div>
         <div className={styles.headerSide}>
           <div className={styles.headerBadges}>
-            {/* <span className={styles.badge}>
-              {columns.find((column) => column.id === task.status)?.name || "Unknown"}
-            </span> */}
+            {currentStory && task.type !== "STORY" && (
+              <button
+                type="button"
+                className={styles.storyLinkTag}
+                onClick={openStoryPage}
+              >
+                Belongs to Story "{currentStory.title}"
+              </button>
+            )}
           </div>
           {!isReadOnly && (
-            <button
-              className={styles.editTaskButton}
-              onClick={() => setIsEditModalOpen(true)}
-              title="Edit task details"
-            >
-              ✎ Edit Task
-            </button>
+            <div className={styles.headerActionRow}>
+              {task.type !== "STORY" && (
+                <button
+                  type="button"
+                  className={styles.assignStoryButton}
+                  onClick={() => setIsStoryModalOpen(true)}
+                  title="Assign this item to a story"
+                >
+                  {currentStory ? "Change Story" : "Assign To Story"}
+                </button>
+              )}
+              <button
+                className={styles.editTaskButton}
+                onClick={() => setIsEditModalOpen(true)}
+                title="Edit task details"
+              >
+                ✎ Edit Task
+              </button>
+            </div>
           )}
         </div>
       </header>
 
       <section className={styles.metaPanel}>
-        
         <div className={styles.metaGrid}>
           <div className={styles.metaItem}>
             <span>Current Status</span>
@@ -281,12 +431,14 @@ const TaskDetails: React.FC = () => {
           </div>
           <div className={styles.metaItem}>
             <span>Assigned To</span>
-            <strong>{task.assignee?.name || "Unassigned"}</strong>
+            <div className={styles.personValue}>
+              <AvatarName user={task.assignee} fallbackText="Unassigned" />
+            </div>
           </div>
           <div className={styles.metaItem}>
             <span>Due Date</span>
-            <strong>
-              {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
+            <strong className={dueDateDisplay.isOverdue ? styles.overdueValue : undefined}>
+              {dueDateDisplay.label}
             </strong>
           </div>
           <div className={styles.metaItem}>
@@ -307,6 +459,46 @@ const TaskDetails: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {task.type === "STORY" && (
+        <section className={styles.storyChildrenPanel}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Story Work Items</h2>
+              <p className={styles.sectionSubtitle}>
+                Tasks and bugs linked to this story.
+              </p>
+            </div>
+          </div>
+
+          {childItemsWithStatus.length > 0 ? (
+            <div className={styles.storyChildrenGrid}>
+              {childItemsWithStatus.map((childItem) => (
+                <button
+                  key={childItem.id}
+                  type="button"
+                  className={styles.storyChildCard}
+                  onClick={() =>
+                    navigate(
+                      `/project/${projectId}/workflow/${workflowId}/task/${childItem.id}`
+                    )
+                  }
+                >
+                  <strong className={styles.storyChildTitle}>{childItem.title}</strong>
+                  <div className={styles.storyChildMeta}>
+                    <span className={styles.storyChildType}>{childItem.type}</span>
+                    <span className={styles.storyChildStatus}>{childItem.statusLabel}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.storyChildrenEmpty}>
+              No tasks or bugs have been linked to this story yet.
+            </p>
+          )}
+        </section>
+      )}
 
       <div className={styles.layoutGrid}>
         <div className={styles.mainColumn}>
@@ -464,6 +656,61 @@ const TaskDetails: React.FC = () => {
                 )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isStoryModalOpen && task.type !== "STORY" && (
+        <div className={styles.modalOverlay} onClick={() => setIsStoryModalOpen(false)}>
+          <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 className={styles.sectionTitle}>Assign To Story</h2>
+                <p className={styles.sectionSubtitle}>
+                  Link this work item to an existing story in the same workflow.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.form}>
+              <label className={styles.field}>
+                <span>Story</span>
+                <select
+                  value={selectedStoryId}
+                  disabled={isAssigningStory}
+                  onChange={(event) => setSelectedStoryId(event.target.value)}
+                >
+                  <option value="">No Story</option>
+                  {stories.map((story) => (
+                    <option key={story.id} value={story.id}>
+                      {story.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className={styles.formActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => {
+                    setSelectedStoryId(task.parentStoryId ?? "");
+                    setIsStoryModalOpen(false);
+                  }}
+                  disabled={isAssigningStory}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={() => void handleAssignStory()}
+                  disabled={isAssigningStory}
+                >
+                  {isAssigningStory ? "Saving..." : "Save Story Link"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

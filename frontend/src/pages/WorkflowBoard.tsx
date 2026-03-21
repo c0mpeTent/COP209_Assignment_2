@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import KanbanColumn from "../components/kanban/KhanbanColumn";
 import CreateTaskModal from "../components/kanban/CreateTaskModal";
-import EditTaskModal from "../components/kanban/EditTaskModal";
 import type {
   BoardFetchResponse,
   BoardMemberOption,
   ColumnData,
   ColumnUpdatePayload,
   CreateTaskPayload,
+  InvalidTransition,
   ProjectRole,
   Task,
   UpdateTaskPayload,
@@ -26,18 +26,23 @@ const WorkflowBoard: React.FC = () => {
   const [columns, setColumns] = useState<ColumnData[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [viewerRole, setViewerRole] = useState<ProjectRole>("PROJECT_VIEWER");
+  const [currentUserId, setCurrentUserId] = useState("");
   const [workflowName, setWorkflowName] = useState("Workflow");
   const [boardId, setBoardId] = useState("");
   const [boardMembers, setBoardMembers] = useState<BoardMemberOption[]>([]);
+  const [leftToRightOnly, setLeftToRightOnly] = useState(false);
+  const [invalidTransitions, setInvalidTransitions] = useState<InvalidTransition[]>([]);
+  const [invalidFromColumnId, setInvalidFromColumnId] = useState("");
+  const [invalidToColumnId, setInvalidToColumnId] = useState("");
   const [newColName, setNewColName] = useState("");
   const [newColWip, setNewColWip] = useState(0);
   const [showAddColumn, setShowAddColumn] = useState(false);
+  const [showTransitionRules, setShowTransitionRules] = useState(false);
+  const [showTransitionInfo, setShowTransitionInfo] = useState(false);
   const [isEditingWorkflowName, setIsEditingWorkflowName] = useState(false);
   const [workflowNameInput, setWorkflowNameInput] = useState("");
   const [isSavingWorkflowName, setIsSavingWorkflowName] = useState(false);
-  const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
-  const [editingStory, setEditingStory] = useState<Task | null>(null);
   const [boardActionLabel, setBoardActionLabel] = useState<string | null>(null);
 
   const isWorkflowAdmin =
@@ -64,10 +69,13 @@ const WorkflowBoard: React.FC = () => {
       const data: BoardFetchResponse = await response.json();
 
       setViewerRole(data.userRole || "PROJECT_VIEWER");
+      setCurrentUserId(data.currentUserId || "");
       setBoardId(data.id);
       setWorkflowName(data.name);
       setWorkflowNameInput(data.name);
       setBoardMembers(data.members ?? []);
+      setLeftToRightOnly(Boolean(data.leftToRightOnly));
+      setInvalidTransitions(data.invalidTransitions ?? []);
       setColumns(
         data.columns
           .sort((a, b) => a.order - b.order)
@@ -80,6 +88,18 @@ const WorkflowBoard: React.FC = () => {
           }))
       );
       setTasks(data.tasks);
+
+      const sortedColumns = data.columns.slice().sort((a, b) => a.order - b.order);
+      setInvalidFromColumnId((current) =>
+        sortedColumns.some((column) => column.id === current)
+          ? current
+          : sortedColumns[0]?.id || ""
+      );
+      setInvalidToColumnId((current) =>
+        sortedColumns.some((column) => column.id === current)
+          ? current
+          : sortedColumns[1]?.id || sortedColumns[0]?.id || ""
+      );
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -104,17 +124,6 @@ const WorkflowBoard: React.FC = () => {
     [tasks]
   );
 
-  const selectedStory = useMemo(
-    () => stories.find((story) => story.id === selectedStoryId) ?? null,
-    [selectedStoryId, stories]
-  );
-
-  useEffect(() => {
-    if (selectedStoryId && !selectedStory) {
-      setSelectedStoryId(null);
-    }
-  }, [selectedStory, selectedStoryId]);
-
   const visibleWorkItems = useMemo(
     () =>
       tasks.filter((task) => {
@@ -122,13 +131,9 @@ const WorkflowBoard: React.FC = () => {
           return false;
         }
 
-        if (selectedStoryId) {
-          return task.parentStoryId === selectedStoryId;
-        }
-
-        return !task.parentStoryId;
+        return true;
       }),
-    [selectedStoryId, tasks]
+    [tasks]
   );
 
   const displayColumns = useMemo(
@@ -140,59 +145,32 @@ const WorkflowBoard: React.FC = () => {
     [orderedColumns, visibleWorkItems]
   );
 
-  const selectedStoryTaskCount = useMemo(
-    () => tasks.filter((task) => task.parentStoryId === selectedStoryId).length,
-    [selectedStoryId, tasks]
+  const defaultStoryStatusId = orderedColumns[0]?.id ?? "";
+
+  const getColumnTitle = useCallback(
+    (columnId: string) =>
+      orderedColumns.find((column) => column.id === columnId)?.title ?? "Unknown",
+    [orderedColumns]
   );
 
-  const selectedStoryStatusLabel = useMemo(() => {
-    if (!selectedStory) {
-      return "";
-    }
+  const invalidTransitionLabels = useMemo(
+    () =>
+      invalidTransitions.map((transition) => ({
+        ...transition,
+        fromTitle: getColumnTitle(transition.fromColumnId),
+        toTitle: getColumnTitle(transition.toColumnId),
+      })),
+    [getColumnTitle, invalidTransitions]
+  );
 
-    return (
-      orderedColumns.find((column) => column.id === selectedStory.status)?.title ??
-      "Unknown"
-    );
-  }, [orderedColumns, selectedStory]);
-
-  const selectedStoryPriorityClass = useMemo(() => {
-    if (!selectedStory) {
-      return "";
-    }
-
-    switch (selectedStory.priority) {
-      case "CRITICAL":
-        return styles.storyPriorityCritical;
-      case "HIGH":
-        return styles.storyPriorityHigh;
-      case "MEDIUM":
-        return styles.storyPriorityMedium;
-      case "LOW":
-        return styles.storyPriorityLow;
-      default:
-        return "";
-    }
-  }, [selectedStory]);
-
-  const selectedStoryDueDateLabel = useMemo(() => {
-    if (!selectedStory?.dueDate) {
-      return "No due date";
-    }
-
-    const dueDate = new Date(selectedStory.dueDate);
-    if (Number.isNaN(dueDate.getTime())) {
-      return "No due date";
-    }
-
-    return dueDate.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  }, [selectedStory]);
-
-  const defaultStoryStatusId = orderedColumns[0]?.id ?? "";
+  const storyCards = useMemo(
+    () =>
+      stories.map((story) => ({
+        ...story,
+        statusLabel: getColumnTitle(story.status),
+      })),
+    [getColumnTitle, stories]
+  );
 
   const handleUpdateWorkflowName = async () => {
     if (!boardId || !workflowNameInput.trim()) {
@@ -225,6 +203,99 @@ const WorkflowBoard: React.FC = () => {
       alert(error instanceof Error ? error.message : "Could not rename workflow");
     } finally {
       setIsSavingWorkflowName(false);
+      setBoardActionLabel(null);
+    }
+  };
+
+  const handleUpdateTransitionMode = async (nextLeftToRightOnly: boolean) => {
+    try {
+      setBoardActionLabel(
+        nextLeftToRightOnly
+          ? "Enabling left-to-right rules..."
+          : "Allowing any-direction transitions..."
+      );
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/transition-rules/${boardId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ leftToRightOnly: nextLeftToRightOnly }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not update transition rules");
+      }
+
+      setLeftToRightOnly(Boolean(data.leftToRightOnly));
+      setInvalidTransitions(data.invalidTransitions ?? []);
+    } catch (error) {
+      console.error("Transition mode update failed:", error);
+      alert(error instanceof Error ? error.message : "Could not update transition rules");
+    } finally {
+      setBoardActionLabel(null);
+    }
+  };
+
+  const handleAddInvalidTransition = async () => {
+    if (!invalidFromColumnId || !invalidToColumnId) {
+      return;
+    }
+
+    try {
+      setBoardActionLabel("Adding invalid transition...");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/invalid-transition/${boardId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            fromColumnId: invalidFromColumnId,
+            toColumnId: invalidToColumnId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not add invalid transition");
+      }
+
+      setInvalidTransitions((current) => [...current, data]);
+    } catch (error) {
+      console.error("Adding invalid transition failed:", error);
+      alert(error instanceof Error ? error.message : "Could not add invalid transition");
+    } finally {
+      setBoardActionLabel(null);
+    }
+  };
+
+  const handleDeleteInvalidTransition = async (transitionId: string) => {
+    try {
+      setBoardActionLabel("Removing invalid transition...");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/invalid-transition/${boardId}/${transitionId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not remove invalid transition");
+      }
+
+      setInvalidTransitions((current) =>
+        current.filter((transition) => transition.id !== transitionId)
+      );
+    } catch (error) {
+      console.error("Removing invalid transition failed:", error);
+      alert(error instanceof Error ? error.message : "Could not remove invalid transition");
+    } finally {
       setBoardActionLabel(null);
     }
   };
@@ -514,24 +585,7 @@ const WorkflowBoard: React.FC = () => {
     }
   };
 
-  const handleDeleteStory = async (story: Task) => {
-    if (
-      !window.confirm(
-        `Delete story "${story.title}"? This will also remove its child tasks and bugs.`
-      )
-    ) {
-      return;
-    }
-
-    await deleteTaskById(story.id);
-    setSelectedStoryId(null);
-  };
-
   const boardSubtitle = useMemo(() => {
-    if (selectedStory) {
-      return `Viewing tasks and bugs inside "${selectedStory.title}"`;
-    }
-
     if (viewerRole === "PROJECT_VIEWER") {
       return "Read-only board view";
     }
@@ -541,18 +595,18 @@ const WorkflowBoard: React.FC = () => {
     }
 
     return "Task editing enabled";
-  }, [isWorkflowAdmin, selectedStory, viewerRole]);
+  }, [isWorkflowAdmin, viewerRole]);
 
   if (loading) {
     return <div className={styles.loading}>Loading Board...</div>;
   }
 
-  const openSelectedStoryPage = () => {
-    if (!projectId || !workflowId || !selectedStory) {
+  const openStoryPage = (storyId: string) => {
+    if (!projectId || !workflowId) {
       return;
     }
 
-    navigate(`/project/${projectId}/workflow/${workflowId}/task/${selectedStory.id}`);
+    navigate(`/project/${projectId}/workflow/${workflowId}/task/${storyId}`);
   };
 
   return (
@@ -589,7 +643,7 @@ const WorkflowBoard: React.FC = () => {
               </div>
             ) : (
               <>
-                <h1>{workflowName.replace(/-/g, " ").toUpperCase()}</h1>
+                <h1 className="maintitle">{workflowName.replace(/-/g, " ").toUpperCase()}</h1>
                 {isWorkflowAdmin && (
                   <button
                     className={styles.editWorkflowBtn}
@@ -614,6 +668,14 @@ const WorkflowBoard: React.FC = () => {
 
         {isWorkflowAdmin && (
           <div className={styles.columnControls}>
+            <button
+              type="button"
+              onClick={() => setShowTransitionRules((current) => !current)}
+              className={styles.transitionPanelBtn}
+              disabled={isBoardActionPending}
+            >
+              {showTransitionRules ? "Close Transition Rules" : "Change Transition Rules"}
+            </button>
             {!showAddColumn ? (
               <button
                 onClick={() => setShowAddColumn(true)}
@@ -656,41 +718,155 @@ const WorkflowBoard: React.FC = () => {
         )}
       </header>
 
+      {isWorkflowAdmin && showTransitionRules && (
+      <section className={styles.transitionPanel}>
+        <div className={styles.transitionHeader}>
+          <div className={styles.transitionHeaderLeft}>
+            <h2 className={styles.transitionTitle}>Transition Rules</h2>
+            {isWorkflowAdmin && (
+              <div className={styles.transitionActionGroup}>
+                <button
+                  className={`${styles.transitionModeBtn} ${
+                    leftToRightOnly ? styles.transitionModeBtnActive : ""
+                  }`}
+                  onClick={() => void handleUpdateTransitionMode(true)}
+                  disabled={isBoardActionPending || leftToRightOnly}
+                >
+                  Allow Left to Right Only
+                </button>
+                <button
+                  className={`${styles.transitionModeBtn} ${
+                    !leftToRightOnly ? styles.transitionModeBtnActive : ""
+                  }`}
+                  onClick={() => void handleUpdateTransitionMode(false)}
+                  disabled={isBoardActionPending || !leftToRightOnly}
+                >
+                  Set Invalid Status Transition
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className={styles.transitionInfoBtn}
+            onClick={() => setShowTransitionInfo((current) => !current)}
+            disabled={isBoardActionPending}
+            title="Show transition rule help"
+          >
+            i
+          </button>
+        </div>
+
+        {showTransitionInfo && (
+          <>
+            <p className={styles.transitionSubtitle}>
+              By default, all status transitions are valid unless this workflow restricts them.
+            </p>
+            {!leftToRightOnly && (
+              <p className={styles.transitionModeNote}>
+                Custom invalid transitions can be added below while all other moves remain valid.
+              </p>
+            )}
+          </>
+        )}
+
+        {leftToRightOnly && (
+          <p className={styles.transitionModeNote}>
+            Currently left to right transitions are valid in this workflow. To customize specific invalid transitions, switch to "Set Invalid Status Transition" mode.
+          </p>
+        )}
+
+        {!leftToRightOnly && (
+          <>
+            <div className={styles.transitionForm}>
+              <select
+                value={invalidFromColumnId}
+                onChange={(event) => setInvalidFromColumnId(event.target.value)}
+                disabled={isBoardActionPending}
+              >
+                {orderedColumns.map((column) => (
+                  <option key={column.id} value={column.id}>
+                    From: {column.title}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={invalidToColumnId}
+                onChange={(event) => setInvalidToColumnId(event.target.value)}
+                disabled={isBoardActionPending}
+              >
+                {orderedColumns.map((column) => (
+                  <option key={column.id} value={column.id}>
+                    To: {column.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                className={styles.addInvalidTransitionBtn}
+                onClick={handleAddInvalidTransition}
+                disabled={
+                  isBoardActionPending ||
+                  !invalidFromColumnId ||
+                  !invalidToColumnId ||
+                  invalidFromColumnId === invalidToColumnId
+                }
+              >
+                Add Invalid Transition
+              </button>
+            </div>
+
+            <div className={styles.transitionList}>
+              {invalidTransitionLabels.length === 0 ? (
+                <p className={styles.transitionEmpty}>No custom invalid transitions added.</p>
+              ) : (
+                invalidTransitionLabels.map((transition) => (
+                  <div key={transition.id} className={styles.transitionPill}>
+                    <span>
+                      {transition.fromTitle} {"->"} {transition.toTitle}
+                    </span>
+                    {isWorkflowAdmin && (
+                      <button
+                        className={styles.removeTransitionBtn}
+                        onClick={() => void handleDeleteInvalidTransition(transition.id)}
+                        disabled={isBoardActionPending}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </section>
+      )}
+
       <section className={styles.storySection}>
         <div className={styles.storySectionHeader}>
           <h2 className={styles.storyTitle}>Stories</h2>
           {canEditTasks && (
-            selectedStory ? (
-              <button
-                className={styles.storyActionBtn}
-                disabled={isBoardActionPending}
-                onClick={() => setSelectedStoryId(null)}
-              >
-                Close Story
-              </button>
-            ) : (
-              <button
-                className={styles.storyActionBtn}
-                disabled={isBoardActionPending}
-                onClick={() => setIsStoryModalOpen(true)}
-              >
-                + Add Story
-              </button>
-            )
+            <button
+              className={styles.storyActionBtn}
+              disabled={isBoardActionPending}
+              onClick={() => setIsStoryModalOpen(true)}
+            >
+              + Add Story
+            </button>
           )}
         </div>
 
         <div className={styles.storyGrid}>
-          {stories.length > 0 ? (
-            stories.map((story) => (
+          {storyCards.length > 0 ? (
+            storyCards.map((story) => (
               <button
                 key={story.id}
-                className={`${styles.storyCard} ${
-                  selectedStoryId === story.id ? styles.storyCardActive : ""
-                }`}
-                onClick={() => setSelectedStoryId(story.id)}
+                type="button"
+                className={styles.storyCard}
+                onClick={() => openStoryPage(story.id)}
               >
-                {story.title}
+                <span className={styles.storyCardTitle}>{story.title}</span>
+                <span className={styles.storyCardStatus}>{story.statusLabel}</span>
               </button>
             ))
           ) : (
@@ -698,78 +874,6 @@ const WorkflowBoard: React.FC = () => {
           )}
         </div>
       </section>
-
-      {selectedStory && (
-        <section
-          className={`${styles.storyDetailsBox} ${selectedStoryPriorityClass}`}
-          role="button"
-          tabIndex={0}
-          onClick={openSelectedStoryPage}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openSelectedStoryPage();
-            }
-          }}
-        >
-          <div className={styles.storyDetailsTop}>
-            <div>
-              <h3 className={styles.storyDetailsTitle}>{selectedStory.title}</h3>
-              <p className={styles.storyDetailsText}>
-                {selectedStory.description || "No story description provided."}
-              </p>
-            </div>
-            <div className={styles.storyStatusBadge}>{selectedStoryStatusLabel}</div>
-          </div>
-
-          <div className={styles.storyMetaRow}>
-            <div className={styles.storyMetaGroup}>
-              <span className={styles.storyMetaLabel}>Created By</span>
-              <strong>{selectedStory.reporter?.name || "Unknown"}</strong>
-            </div>
-            <div className={styles.storyMetaGroup}>
-              <span className={styles.storyMetaLabel}>Assigned To</span>
-              <strong>{selectedStory.assignee?.name || "Unassigned"}</strong>
-            </div>
-            <div className={styles.storyMetaGroup}>
-              <span className={styles.storyMetaLabel}>Tasks/Bugs</span>
-              <strong>{selectedStoryTaskCount}</strong>
-            </div>
-          </div>
-
-          <div className={styles.storyDetailsActions}>
-            <div className={styles.storyDueDate}>
-              <span className={styles.storyDueDateLabel}>Due Date</span>
-              <strong>{selectedStoryDueDateLabel}</strong>
-            </div>
-            {canEditTasks && (
-              <div className={styles.storyActionButtons}>
-                <button
-                  className={styles.editStoryBtn}
-                  disabled={isBoardActionPending}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setEditingStory(selectedStory);
-                  }}
-                >
-                  Edit Story Details
-                </button>
-                <button
-                  className={styles.deleteStoryBtn}
-                  disabled={isBoardActionPending}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void handleDeleteStory(selectedStory);
-                  }}
-                >
-                  Delete Story
-                </button>
-              </div>
-            )}
-          </div>
-          
-        </section>
-      )}
 
       <div className={styles.kanbanContainer}>
         {displayColumns.map((column) => (
@@ -779,8 +883,9 @@ const WorkflowBoard: React.FC = () => {
             allColumns={orderedColumns}
             boardId={boardId}
             userRole={viewerRole}
+            currentUserId={currentUserId}
             members={boardMembers}
-            activeStoryId={selectedStoryId}
+            stories={stories}
             onMoveTask={handleMoveTask}
             onUpdateTask={handleEditTask}
             onCreateTask={handleCreateTask}
@@ -809,21 +914,6 @@ const WorkflowBoard: React.FC = () => {
               parentStoryId: null,
             });
             setIsStoryModalOpen(false);
-          }}
-        />
-      )}
-
-      {editingStory && (
-        <EditTaskModal
-          task={editingStory}
-          columns={orderedColumns}
-          members={boardMembers}
-          isReadOnly={viewerRole === "PROJECT_VIEWER"}
-          lockStatus
-          onClose={() => setEditingStory(null)}
-          onUpdate={async (payload) => {
-            await handleEditTask(payload);
-            setEditingStory(null);
           }}
         />
       )}

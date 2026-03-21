@@ -20,7 +20,7 @@
 }
 
 .boardHeader h1 {
-  font-size: 1.8rem;
+  font-size: 2.5rem;
   color: #bb86fc;
   margin: 0;
 }
@@ -105,11 +105,180 @@
   font-size: 0.92rem;
 }
 
+.boardMetaNote {
+  margin: 0.35rem 0 0 0;
+  color: #b7b7b7;
+  font-size: 0.9rem;
+}
+
 .boardActionState {
   margin: 0.35rem 0 0 0;
   color: #f3c96b;
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.transitionPanel {
+  margin-top: 1.25rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.transitionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.transitionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.transitionTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.75rem;
+}
+
+.transitionSubtitle {
+  margin: 0.85rem 0 0 0;
+  color: #8d8d8d;
+  font-size: 0.92rem;
+}
+
+.transitionModeNote {
+  margin: 0.85rem 0 0 0;
+  color: #c6c6c6;
+  font-size: 0.93rem;
+}
+
+.transitionActionGroup {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.transitionModeBtn {
+  background: rgba(187, 134, 252, 0.12);
+  color: #bb86fc;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transitionModeBtn:hover {
+  background: rgba(187, 134, 252, 0.18);
+}
+
+.transitionModeBtnActive {
+  background: rgba(82, 160, 255, 0.14);
+  color: #7bb3ff;
+  border-color: rgba(82, 160, 255, 0.32);
+}
+
+.transitionInfoBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+  background: transparent;
+  color: #bb86fc;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transitionInfoBtn:hover {
+  background: rgba(187, 134, 252, 0.12);
+  border-color: #bb86fc;
+}
+
+.transitionInfoBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.transitionForm {
+  margin-top: 1rem;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  
+}
+
+.transitionForm select {
+  background: #121212;
+  border: 1px solid #444;
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  min-width: 190px;
+}
+
+.transitionForm select:focus {
+  border-color: #bb86fc;
+  outline: none;
+}
+
+.addInvalidTransitionBtn {
+  background: #551b74;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addInvalidTransitionBtn:disabled,
+.transitionModeBtn:disabled,
+.removeTransitionBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.transitionList {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.transitionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #232323;
+  border: 1px solid #333;
+  border-radius: 999px;
+  color: #f0f0f0;
+  padding: 9px 12px;
+}
+
+.removeTransitionBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 85, 85, 0.22);
+  border-radius: 999px;
+  color: #ff8a8a;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.transitionEmpty {
+  margin: 0;
+  color: #8a8a8a;
 }
 
 .kanbanContainer {
@@ -141,17 +310,17 @@
 .storyTitle {
   margin: 0;
   color: #ffffff;
-  font-size: 1.2rem;
+  font-size: 2rem;
 }
-
 .storyActionBtn {
-  background: rgba(187, 134, 252, 0.12);
+  background: rgba(85, 77, 96, 0.12);
   color: #bb86fc;
   border: 1px solid rgba(187, 134, 252, 0.32);
   border-radius: 8px;
   padding: 9px 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .storyActionBtn:hover {
@@ -160,7 +329,7 @@
 
 .storyGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -170,6 +339,10 @@
   border: 1px solid #333;
   border-radius: 10px;
   padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
   min-width: 0;
   overflow-wrap: anywhere;
   text-align: left;
@@ -183,6 +356,112 @@
 .storyCard:hover {
   border-color: #bb86fc;
   transform: translateY(-2px);
+}
+
+.storyCardTitle {
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.storyCardStatus {
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: rgba(134, 164, 252, 0.12);
+  border: 1px solid rgba(134, 142, 252, 0.3);
+  border-radius: 999px;
+  color: #5ea6fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.65rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.storyCardActions {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.storyDeleteBtn {
+  background: rgba(255, 85, 85, 0.1);
+  border: 1px solid rgba(255, 85, 85, 0.28);
+  border-radius: 999px;
+  color: #ff9a9a;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.storyDeleteBtn:hover:not(:disabled) {
+  background: rgba(255, 85, 85, 0.16);
+  border-color: rgba(255, 85, 85, 0.42);
+}
+
+.storyDeleteBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.moveFeedbackBar {
+  margin-top: 1rem;
+  border-radius: 14px;
+  border: 1px solid #333;
+  padding: 0.9rem 1.15rem;
+}
+
+.moveFeedbackLoading {
+  background: rgba(243, 201, 107, 0.08);
+  border-color: rgba(243, 201, 107, 0.24);
+  color: #f3c96b;
+}
+
+.moveFeedbackSuccess {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: rgba(40, 167, 69, 0.28);
+  color: #8be3a4;
+}
+
+.moveFeedbackError {
+  background: rgba(255, 77, 77, 0.1);
+  border-color: rgba(255, 77, 77, 0.26);
+  color: #ff8b8b;
+}
+
+.moveFeedbackContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-weight: 600;
+}
+
+.moveFeedbackSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(243, 201, 107, 0.28);
+  border-top-color: #f3c96b;
+  animation: boardSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .storyGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .storyCardActive {
@@ -345,6 +624,20 @@
 }
 
 @media (max-width: 768px) {
+  .storyCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .storyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .storyCardActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .storyDetailsActions {
     align-items: flex-start;
     flex-direction: column;
@@ -376,6 +669,51 @@
 .columnControls {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.workflowSettingsBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+  background: rgba(187, 134, 252, 0.1);
+  color: #bb86fc;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.workflowSettingsBtn:hover {
+  background: rgba(187, 134, 252, 0.18);
+  border-color: #bb86fc;
+}
+
+.workflowSettingsBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.transitionPanelBtn {
+  background: transparent;
+  color: #bb86fc;
+  border: 1px solid rgba(187, 134, 252, 0.32);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transitionPanelBtn:hover {
+  background: rgba(187, 134, 252, 0.12);
+  border-color: #bb86fc;
+}
+
+.transitionPanelBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .addColBtn {
@@ -441,6 +779,108 @@
   cursor: pointer;
 }
 
+.settingsOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.settingsModal {
+  width: min(460px, 100%);
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 1.35rem;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+}
+
+.settingsModalHeader {
+  margin-bottom: 1rem;
+}
+
+.settingsTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+}
+
+.settingsSubtitle {
+  margin: 0.45rem 0 0 0;
+  color: #9a9a9a;
+  line-height: 1.5;
+}
+
+.settingsField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.settingsField span {
+  color: #d5d5d5;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.settingsField select {
+  background: #121212;
+  border: 1px solid #444;
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.settingsField select:focus {
+  outline: none;
+  border-color: #bb86fc;
+}
+
+.settingsHint {
+  margin: 1rem 0 0 0;
+  color: #a3a3a3;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.settingsActions {
+  margin-top: 1.2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.settingsSaveBtn,
+.settingsCancelBtn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settingsSaveBtn {
+  background: #551b74;
+  border: none;
+  color: #ffffff;
+}
+
+.settingsCancelBtn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #d7d7d7;
+}
+
+.settingsSaveBtn:disabled,
+.settingsCancelBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .loading {
   display: flex;
   align-items: center;
@@ -461,10 +901,40 @@
   }
 }
 
+@keyframes boardSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 960px) {
   .boardHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .transitionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .transitionHeaderLeft {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .transitionForm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .transitionForm select,
+  .addInvalidTransitionBtn {
+    width: 100%;
   }
 
   .addColForm {
