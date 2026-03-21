@@ -26,6 +26,8 @@ interface ProjectDataResponse {
     id: string;
     description: string | null;
     isArchived: boolean;
+    createdAt?: string;
+    updatedAt?: string;
     members: ProjectMemberResponse[];
     boards: BoardResponse[];
   };
@@ -47,6 +49,8 @@ const ProjectDetails: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [viewerRole, setViewerRole] = useState("PROJECT_VIEWER");
   const [isArchived, setIsArchived] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [projectNameInput, setProjectNameInput] = useState("");
   const [projectDescriptionInput, setProjectDescriptionInput] = useState("");
@@ -60,6 +64,25 @@ const ProjectDetails: React.FC = () => {
   const canManageProject =
     viewerRole === "GLOBAL_ADMIN" || viewerRole === "PROJECT_ADMIN";
   const effectiveRole = isArchived ? "PROJECT_VIEWER" : viewerRole;
+
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) {
+      return "";
+    }
+
+    const parsed = new Date(timestamp);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+
+    return parsed.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const loadProjectData = useCallback(async () => {
     if (!id) {
@@ -89,6 +112,8 @@ const ProjectDetails: React.FC = () => {
       setProjectNameInput(project.name);
       setProjectDescriptionInput(project.description || "");
       setIsArchived(project.isArchived);
+      setCreatedAt(project.createdAt ?? null);
+      setUpdatedAt(project.updatedAt ?? null);
       setViewerRole(data.viewerRole || "PROJECT_VIEWER");
 
       const workflowNames = project.boards.map((board: BoardResponse) => board.name);
@@ -145,6 +170,7 @@ const ProjectDetails: React.FC = () => {
       setDescription(data.project.description || "No description provided.");
       setProjectNameInput(data.project.name);
       setProjectDescriptionInput(data.project.description || "");
+      setUpdatedAt(data.project.updatedAt ?? null);
       setIsEditModalOpen(false);
     } catch (error) {
       console.error("Error updating project:", error);
@@ -187,6 +213,7 @@ const ProjectDetails: React.FC = () => {
       }
 
       setIsArchived(data.project.isArchived);
+      setUpdatedAt(data.project.updatedAt ?? null);
     } catch (error) {
       console.error("Project archive update failed:", error);
     } finally {
@@ -349,7 +376,7 @@ const ProjectDetails: React.FC = () => {
     <div className={styles.container}>
       <header className={styles.projectHeader}>
         <div>
-          <h1 className={styles.projectName}>Project Name : {projectName}</h1>
+          <h1 className={styles.projectName}> {projectName}</h1>
           <div className={styles.metaRow}>
             <p className={styles.projectMeta}>Active Workflows: {workflows.length}</p>
             <span
@@ -360,6 +387,22 @@ const ProjectDetails: React.FC = () => {
               {isArchived ? "Archived" : "Active"}
             </span>
           </div>
+          {(createdAt || updatedAt) && (
+            <div className={styles.timestampRow}>
+              {createdAt && (
+                <span className={styles.timestampItem}>
+                  <span className={styles.timestampLabel}>Created</span>{" "}
+                  {formatTimestamp(createdAt)}
+                </span>
+              )}
+              {updatedAt && (
+                <span className={styles.timestampItem}>
+                  <span className={styles.timestampLabel}>Last updated</span>{" "}
+                  {formatTimestamp(updatedAt)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {canManageProject && (
@@ -436,9 +479,6 @@ const ProjectDetails: React.FC = () => {
             <div className={styles.modalHeader}>
               <div>
                 <h2 className={styles.modalTitle}>Edit Project</h2>
-                {/* <p className={styles.modalSubtitle}>
-                  Update the project name and description.
-                </p> */}
               </div>
               <button
                 className={styles.closeBtn}

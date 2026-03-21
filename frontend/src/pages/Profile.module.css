@@ -4,10 +4,10 @@
   position: fixed;
   top: 0;
   /* Start after the sidebar */
-  left: 300px; 
+  left: 260px; 
   height: 100vh;
   /* Fill only the remaining width */
-  width: calc(100% - 300px); 
+  width: calc(100% - 260px); 
   
   display: flex;
   justify-content: center; 
@@ -19,8 +19,8 @@
 }
 
 .card {
-  background-color: #1e1e1e;
-  border: 1px solid #333;
+  background-color: #1d1d1d;
+  border: 1px solid #353535;
   border-radius: 16px;
   width: 100%;
   max-width: 700px;
