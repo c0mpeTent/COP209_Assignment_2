@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import styles from "./Sidebar.module.css";
 
 interface SidebarItem {
@@ -51,45 +51,43 @@ const Sidebar: React.FC = () => {
     return () => window.clearInterval(intervalId);
   }, [loadUnreadCount]);
 
-
-  const handleLogout =  async() => {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/auth/logout`, {
+  const handleLogout = async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_ORIGIN}/api/auth/logout`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
-        credentials: "include", // Include cookies for session management
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
+        credentials: "include",
       }
+    );
 
-      // 3. Success! Handle the response
-      console.log("Success:", data);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong");
+    }
+
     navigate("/auth");
-    window.location.reload(); 
+    window.location.reload();
   };
-
-  // to check if a link is active
-  //const isActive = (path: string) => location.pathname === path;
 
   const isWorkflowPage = location.pathname.startsWith("/project/") &&
     location.pathname.includes("/workflow/");
   const isTaskPage = isWorkflowPage && location.pathname.includes("/task/");
   const isProjectPage =
-  location.pathname.startsWith("/project/") && !isWorkflowPage;
+    location.pathname.startsWith("/project/") && !isWorkflowPage;
   const isDashboardContext =
     location.pathname === "/dashboard" ||
     location.pathname === "/profile" ||
     location.pathname === "/notifications";
 
   const currentProjectPath = id ? `/project/${id}` : projectId ? `/project/${projectId}` : "/dashboard";
-  const currentWorkflowPath = projectId && workflowId
+  const currentWorkflowPath =
+    projectId && workflowId
       ? `/project/${projectId}/workflow/${workflowId}`
       : currentProjectPath;
-  
+
   let items: SidebarItem[] = [];
 
   if (isTaskPage) {
@@ -198,9 +196,9 @@ const Sidebar: React.FC = () => {
     <aside className={styles.sidebar}>
       <div className={styles.sidebarTop}>
         <div className={styles.logoSection}>
-          <div className={styles.logoIcon}>P</div>
+          <div className={styles.logoIcon}>S</div>
           <h2 className={styles.logoText}>
-            Project<span className={styles.logoAccent}>Pro</span>
+            Sync<span className={styles.logoAccent}>Flow</span>
           </h2>
         </div>
 
