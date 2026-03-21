@@ -29,6 +29,8 @@ export interface TaskHistoryEntry {
   event:
     | "STATUS_CHANGE"
     | "ASSIGNEE_CHANGE"
+    | "TASK_UPDATED"
+    | "STORY_LINK_CHANGE"
     | "COMMENT_ADDED"
     | "COMMENT_EDITED"
     | "COMMENT_DELETED";
@@ -95,16 +97,27 @@ export interface ColumnData {
   tasks: Task[];
 }
 
+export interface InvalidTransition {
+  id: string;
+  fromColumnId: string;
+  toColumnId: string;
+  createdAt: string;
+}
+
 export interface BoardFetchResponse {
   id: string;
   name: string;
   userRole: ProjectRole;
+  currentUserId: string;
+  leftToRightOnly: boolean;
+  resolvedColumnId: string | null;
   columns: {
     id: string;
     name: string;
     wipLimit: number | null;
     order: number;
   }[];
+  invalidTransitions: InvalidTransition[];
   members: BoardMemberOption[];
   tasks: Task[];
 }
@@ -123,6 +136,8 @@ export interface TaskDetailsResponse {
   }[];
   members: BoardMemberOption[];
   task: Task;
+  childItems: Task[];
+  stories: Task[];
 }
 
 export interface CreateTaskPayload {
@@ -145,6 +160,7 @@ export interface UpdateTaskPayload {
   priority?: PriorityType;
   assignee?: string;
   dueDate?: string | null;
+  parentStoryId?: string | null;
 }
 
 export interface ColumnUpdatePayload {
@@ -156,9 +172,11 @@ export interface ColumnProps {
   column: ColumnData;
   boardId: string;
   userRole: ProjectRole;
+  currentUserId: string;
+  isBoardBusy?: boolean;
   allColumns: ColumnData[];
   members: BoardMemberOption[];
-  activeStoryId?: string | null;
+  stories: Task[];
   onMoveTask: (taskId: string, sourceColId: string, targetColId: string) => Promise<void>;
   onUpdateTask: (payload: UpdateTaskPayload) => Promise<void>;
   onCreateTask: (columnId: string, payload: CreateTaskPayload) => Promise<void>;

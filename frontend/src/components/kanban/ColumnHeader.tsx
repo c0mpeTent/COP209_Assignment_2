@@ -13,7 +13,7 @@ const ColumnHeader: React.FC<HeaderProps> = ({ title, currentCount, limit }) => 
 
   return (
     <div className={styles.columnHeader}>
-      <h3>{title}</h3>
+      <h3 className={styles.columntitle}>{title}</h3>
       <span className={isAtLimit ? styles.wipLimitFull : styles.wipLimit}>
         {currentCount}/{limit} 
       </span>

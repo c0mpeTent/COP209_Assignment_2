@@ -47,18 +47,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const statusOptions = useMemo(
     () => {
       const orderedColumns = columns.slice().sort((a, b) => a.order - b.order);
-      const currentColumn = orderedColumns.find((column) => column.id === task.status);
 
       return orderedColumns
-        .filter((column) =>
-          task.type === "STORY" || !currentColumn ? true : column.order >= currentColumn.order
-        )
         .map((column) => ({
           id: column.id,
           title: column.title,
         }));
     },
-    [columns, task.status, task.type]
+    [columns]
   );
 
   const handleSave = async (e: React.FormEvent) => {

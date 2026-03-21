@@ -9,9 +9,11 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   column,
   allColumns,
   userRole,
+  currentUserId,
+  isBoardBusy = false,
   boardId,
   members,
-  activeStoryId,
+  stories,
   onMoveTask,
   onCreateTask,
   onDeleteTask,
@@ -24,7 +26,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   const [showMenu, setShowMenu] = useState(false);
 
   const isAdmin = userRole === "PROJECT_ADMIN" || userRole === "GLOBAL_ADMIN";
-  const canCreate = userRole !== "PROJECT_VIEWER";
+  const canCreate = userRole !== "PROJECT_VIEWER" && !isBoardBusy;
   const columnIndex = useMemo(
     () => allColumns.findIndex((currentColumn) => currentColumn.id === column.id),
     [allColumns, column.id]
@@ -47,7 +49,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    if (userRole === "PROJECT_VIEWER") {
+    if (userRole === "PROJECT_VIEWER" || isBoardBusy) {
       return;
     }
 
@@ -56,7 +58,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   };
 
   const handleDrop = async (e: React.DragEvent) => {
-    if (userRole === "PROJECT_VIEWER") {
+    if (userRole === "PROJECT_VIEWER" || isBoardBusy) {
       return;
     }
 
@@ -117,6 +119,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           <div className={styles.menuContainer}>
             <button
               className={styles.dotsBtn}
+              disabled={isBoardBusy}
               onClick={() => setShowMenu((current) => !current)}
             >
               ⋮
@@ -158,6 +161,13 @@ const KanbanColumn: React.FC<ColumnProps> = ({
             key={task.id}
             task={task}
             columnId={column.id}
+            currentUserId={currentUserId}
+            isBoardBusy={isBoardBusy}
+            storyTitle={
+              task.parentStoryId
+                ? stories.find((story) => story.id === task.parentStoryId)?.title
+                : undefined
+            }
             userRole={userRole}
             onDelete={() => onDeleteTask(task.id, column.id)}
           />
@@ -165,7 +175,11 @@ const KanbanColumn: React.FC<ColumnProps> = ({
       </div>
 
       {canCreate && (
-        <button className={styles.addCardBtn} onClick={() => setIsModalOpen(true)}>
+        <button
+          className={styles.addCardBtn}
+          disabled={isBoardBusy}
+          onClick={() => setIsModalOpen(true)}
+        >
           <span className={styles.plus}>+</span> Create Task
         </button>
       )}
@@ -175,10 +189,10 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           columnId={column.id}
           boardId={boardId}
           members={members}
-          title={activeStoryId ? "Create Story Task" : "Create Issue"}
+          stories={stories}
+          title="Create Issue"
           allowedTypes={["TASK", "BUG"]}
           defaultType="TASK"
-          fixedParentStoryId={activeStoryId ?? null}
           onClose={() => setIsModalOpen(false)}
           onAdd={handleCreateTaskInternal}
         />

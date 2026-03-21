@@ -4,6 +4,7 @@ import type {
   BoardMemberOption,
   CreateTaskPayload,
   PriorityType,
+  Task,
   TaskType,
 } from "../../types/kanban";
 
@@ -11,6 +12,7 @@ interface CreateTaskModalProps {
   columnId: string;
   boardId: string;
   members: BoardMemberOption[];
+  stories?: Task[];
   title?: string;
   allowedTypes?: TaskType[];
   defaultType?: TaskType;
@@ -23,6 +25,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   columnId,
   boardId,
   members,
+  stories = [],
   title: modalTitle = "Create Issue",
   allowedTypes = ["TASK", "BUG", "STORY"],
   defaultType = "TASK",
@@ -36,6 +39,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [priority, setPriority] = useState<PriorityType>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
   const [assignee, setAssignee] = useState("");
+  const [parentStoryId, setParentStoryId] = useState(fixedParentStoryId ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +57,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       priority,
       status: columnId,
       dueDate: dueDate || null,
-      parentStoryId: fixedParentStoryId,
+      parentStoryId:
+        type === "STORY"
+          ? null
+          : fixedParentStoryId ?? (parentStoryId ? parentStoryId : null),
       assignee: assignee || undefined,
     };
 
@@ -123,6 +130,24 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               ))}
             </select>
           </div>
+
+          {type !== "STORY" && !fixedParentStoryId && stories.length > 0 && (
+            <div className={styles.field}>
+              <label>Story</label>
+              <select
+                value={parentStoryId}
+                disabled={isSubmitting}
+                onChange={(e) => setParentStoryId(e.target.value)}
+              >
+                <option value="">No Story</option>
+                {stories.map((story) => (
+                  <option key={story.id} value={story.id}>
+                    {story.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className={styles.row}>
             <div className={styles.field}>
