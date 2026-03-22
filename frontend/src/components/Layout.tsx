@@ -15,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* sidebar component */}
       <Sidebar />
 
-      {/* Maintext area */}
+      {/* maintext area */}
       <div className={styles.mainWrapper}>
 
         {/* pages rendered */}

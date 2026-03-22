@@ -44,9 +44,7 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     void loadUnreadCount();
 
-    const intervalId = window.setInterval(() => {
-      void loadUnreadCount();
-    }, 10000);
+    const intervalId = window.setInterval(() => { void loadUnreadCount(); }, 10000);
 
     return () => window.clearInterval(intervalId);
   }, [loadUnreadCount]);
@@ -72,9 +70,9 @@ const Sidebar: React.FC = () => {
     window.location.reload();
   };
 
-  const isWorkflowPage = location.pathname.startsWith("/project/") &&
-    location.pathname.includes("/workflow/");
+  const isWorkflowPage = location.pathname.startsWith("/project/") && location.pathname.includes("/workflow/");
   const isTaskPage = isWorkflowPage && location.pathname.includes("/task/");
+
   const isProjectPage =
     location.pathname.startsWith("/project/") && !isWorkflowPage;
   const isDashboardContext =
@@ -124,8 +122,7 @@ const Sidebar: React.FC = () => {
         path: "/profile",
         isActive: location.pathname === "/profile",
       },
-      {
-        key: "notifications",
+      { key: "notifications",
         label: "Notifications",
         icon: "🔔",
         path: "/notifications",

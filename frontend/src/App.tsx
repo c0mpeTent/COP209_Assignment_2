@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import ProjectDetails from './pages/ProjectDetails';
 import './App.css';
 
-// Import your Auth component
+// Importing Auth component
 import AuthForm from './components/AuthForm';
 
-// Import your Shared Layout
 import Layout from './components/Layout';
 
-// Import your Pages
+// Importing Pages
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import WorkflowBoard from './pages/WorkflowBoard';
@@ -31,7 +30,7 @@ function App() {
         
         setIsAuthenticated(response.ok);
       } catch (error) {
-        console.error("Auth Check Failed:", error); // Now the variable is used!
+        console.error("Auth Check Failed:", error); // now the variable is used
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -41,7 +40,7 @@ function App() {
     checkAuth();
   }, []); 
 
-  // While waiting for the server, show a spinner or nothing
+  // while waiting for the server, show a spinner or nothing
   if (isLoading) {
     return <div className="loading">Checking authentication...</div>;
   }
@@ -90,6 +89,7 @@ function App() {
             )
           }
         />
+        {/* workflow route */}
         <Route 
           path="/project/:projectId/workflow/:workflowId" 
           element={

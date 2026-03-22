@@ -11,7 +11,6 @@ interface TeamMemberRowProps {
   member: Member;
   currentUserRole: string;
   canChangeRoles: boolean;
-  // New prop to handle the actual change
   onUpdateRole: (email: string, newRole: string) => void;
   onRemove: (email: string) => void;
 }
@@ -31,15 +30,14 @@ const TeamMemberRow: React.FC<TeamMemberRowProps> = ({
 
   const handleRoleChange = (newRole: string) => {
     onUpdateRole(member.email, newRole);
-    setMenuOpen(false); // Close menu after selection
+    setMenuOpen(false); // close menu after selection
   };
 
   return (
     <li className={styles.listItem}>
       <div className={styles.userInfo}>
         <span className={styles.userEmail}>{member.email}</span>
-        <span className={`${styles.roleBadge} ${styles[member.role.toLowerCase().replace(" ", "_")]}`}>
-          {member.role.replace("_", " ")}
+        <span className={`${styles.roleBadge} ${styles[member.role.toLowerCase().replace(" ", "_")]}`}> {member.role.replace("_", " ")}
         </span>
       </div>
 
@@ -51,7 +49,7 @@ const TeamMemberRow: React.FC<TeamMemberRowProps> = ({
             {menuOpen && (
               <div className={styles.dropdownMenu}>
                 <p className={styles.menuTitle}>Change Role</p>
-                {/* Specific Roles defined in your Problem Statement */}
+                {/* specific Roles*/}
                 <button onClick={() => handleRoleChange("PROJECT_ADMIN")}>Project Admin</button>
                 <button onClick={() => handleRoleChange("PROJECT_MEMBER")}>Project Member</button>
                 <button onClick={() => handleRoleChange("PROJECT_VIEWER")}>Project Viewer</button>
@@ -59,9 +57,7 @@ const TeamMemberRow: React.FC<TeamMemberRowProps> = ({
                 <button 
                   className={styles.removeBtn} 
                   onClick={() => onRemove(member.email)}
-                >
-                  Remove User
-                </button>
+                > Remove User </button>
               </div>
             )}
           </>

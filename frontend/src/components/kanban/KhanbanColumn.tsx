@@ -52,15 +52,12 @@ const KanbanColumn: React.FC<ColumnProps> = ({
     if (userRole === "PROJECT_VIEWER" || isBoardBusy) {
       return;
     }
-
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = async (e: React.DragEvent) => {
-    if (userRole === "PROJECT_VIEWER" || isBoardBusy) {
-      return;
-    }
+    if (userRole === "PROJECT_VIEWER" || isBoardBusy) { return; }
 
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
@@ -85,8 +82,8 @@ const KanbanColumn: React.FC<ColumnProps> = ({
     if (!newTitle || newTitle.trim() === column.title) {
       return;
     }
-
     await onRenameColumn(column.id, newTitle.trim());
+
     setShowMenu(false);
   };
 
@@ -160,9 +157,9 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           <TaskCard
             key={task.id}
             task={task}
-            columnId={column.id}
             currentUserId={currentUserId}
             isBoardBusy={isBoardBusy}
+            columnId={column.id}
             storyTitle={
               task.parentStoryId
                 ? stories.find((story) => story.id === task.parentStoryId)?.title
@@ -189,10 +186,10 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           columnId={column.id}
           boardId={boardId}
           members={members}
-          stories={stories}
           title="Create Issue"
           allowedTypes={["TASK", "BUG"]}
           defaultType="TASK"
+          stories={stories}
           onClose={() => setIsModalOpen(false)}
           onAdd={handleCreateTaskInternal}
         />

@@ -63,6 +63,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
     try {
       setIsSubmitting(true);
       await onCreate(newComment);
+
       setNewComment("");
     } finally {
       setIsSubmitting(false);
@@ -70,9 +71,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
   };
 
   const handleUpdate = async () => {
-    if (!editingCommentId || !editingText.trim()) {
-      return;
-    }
+    if (!editingCommentId || !editingText.trim()) { return; }
 
     try {
       setIsSubmitting(true);
@@ -88,6 +87,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
     try {
       setDeletingCommentId(commentId);
       await onDelete(commentId);
+
     } finally {
       setDeletingCommentId(null);
     }
@@ -98,7 +98,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Comments</h2>
-          <p className={styles.subtitle}>
+          <p className={styles.subtitle}> 
             Supports `**bold**`, `*italic*`, `__underline__`, `code`, line breaks, and mentions like{" "}
             {mentionHints || "@username"}.
           </p>
@@ -120,8 +120,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
               className={styles.primaryButton}
               disabled={isSubmitting || !newComment.trim()}
               onClick={() => void handleCreate()}
-            >
-              {isSubmitting ? "Adding..." : "Add Comment"}
+            > {isSubmitting ? "Adding..." : "Add Comment"}
             </button>
           </div>
         </div>
@@ -162,8 +161,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                         className={styles.deleteButton}
                         disabled={isSubmitting || deletingCommentId === comment.id}
                         onClick={() => void handleDelete(comment.id)}
-                      >
-                        {deletingCommentId === comment.id ? "Deleting..." : "Delete"}
+                      > {deletingCommentId === comment.id ? "Deleting..." : "Delete"}
                       </button>
                     </div>
                   )}
