@@ -49,6 +49,7 @@ const AuthForm: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
+      alert(error instanceof Error ? error.message : "Authentication failed");
     }
   };
 
