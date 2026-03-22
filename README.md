@@ -88,23 +88,14 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in the browser.
 
-## Scripts
+### backend test
+   ```bash
+   cd backend
+   npm test
+   ```
+## Connection to database using mongodb compass
+connection url = mongodb+srv://ta_grader:123456_ta@cluster0.q3nk8vh.mongodb.net/
 
-### Backend
-
-```bash
-npm run dev
-npm run build
-npm run prisma:generate
-```
-
-### Frontend
-
-```bash
-npm run dev
-npm run build
-npm run lint
-```
 
 ## API Summary
 
