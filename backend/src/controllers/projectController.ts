@@ -98,6 +98,24 @@ export const deleteProject = async (req: Request, res: Response) => {
                 projectId: projectId as string
             }
         });
+        const projectBoards = await prisma.board.findMany({
+            where: {
+                projectId: projectId as string,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        if (projectBoards.length > 0) {
+            await prisma.invalidTransition.deleteMany({
+                where: {
+                boardId: {
+                    in: projectBoards.map((board) => board.id),
+                },
+                },
+            });
+        }
         // console.log("point 4");
         await prisma.board.deleteMany({
             where:{

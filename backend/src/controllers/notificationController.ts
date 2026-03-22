@@ -109,3 +109,19 @@ export const markAllNotificationsRead = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const clearNotificationHistory = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+
+    await prisma.notification.deleteMany({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    return res.status(200).json({ message: "Notification history cleared" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

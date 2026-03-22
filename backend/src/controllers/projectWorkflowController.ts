@@ -13,6 +13,8 @@ type TaskWithRelation = PrismaTask& {assignee: User | null ; reporter: User | nu
 type TaskHistoryEventType =
   | "STATUS_CHANGE"
   | "ASSIGNEE_CHANGE"
+  | "TASK_UPDATED"
+  | "STORY_LINK_CHANGE"
   | "COMMENT_ADDED"
   | "COMMENT_EDITED"
   | "COMMENT_DELETED";
@@ -21,6 +23,12 @@ type MentionedUser = {
   id: string;
   name: string;
   email: string;
+};
+type BoardInvalidTransition = {
+  id: string;
+  fromColumnId: string;
+  toColumnId: string;
+  createdAt: Date;
 };
 
 type TaskHistoryEntry = {
@@ -34,6 +42,12 @@ type TaskHistoryEntry = {
   commentId?: string;
   mentions?: MentionedUser[];
 };
+const serializeInvalidTransition = (transition: BoardInvalidTransition) => ({
+  id: transition.id,
+  fromColumnId: transition.fromColumnId,
+  toColumnId: transition.toColumnId,
+  createdAt: transition.createdAt,
+});
 
 const buildHistoryEntry = (
   event: TaskHistoryEventType,
@@ -126,6 +140,14 @@ const getLifecycleDates = async (
   currentResolvedAt: Date | null,
   currentClosedAt: Date | null
 ) => {
+  const board = await prisma.board.findUnique({
+    where: {
+      id: boardId,
+    },
+    select: {
+      resolvedColumnId: true,
+    },
+  });
   const columns = await prisma.column.findMany({
     where: {
       boardId: boardId
@@ -143,7 +165,8 @@ const getLifecycleDates = async (
     })),
     statusId,
     currentResolvedAt,
-    currentClosedAt
+    currentClosedAt,
+    board?.resolvedColumnId === statusId ? new Date() : undefined
   );
 };
 const getInitialStoryColumn = async (boardId: string) => {
@@ -215,12 +238,40 @@ const validateStatusTransition = async (
     throw new Error("Invalid status transition");
   }
 
-  if (currentColumn.order >= nextColumn.order) {
-    throw new Error("Invalid status transition. Tasks can only move left to right.");
+  const transitionConfig = await getBoardTransitionConfig(boardId);
+  if (!transitionConfig) {
+    throw new Error("Workflow not found");
   }
+
+  if (
+    transitionConfig.leftToRightOnly &&
+    currentColumn.order >= nextColumn.order
+  ) {
+    throw new Error("Invalid status transition. This workflow only allows left-to-right moves.");
+  }
+
+  if (transitionConfig.leftToRightOnly) {
+    return;
+  }
+
+  const isExplicitlyInvalid = transitionConfig.invalidTransitions.some(
+    (transition) =>
+      transition.fromColumnId === currentStatusId &&
+      transition.toColumnId === nextStatusId
+  );
+
+  if (isExplicitlyInvalid) {
+    throw new Error(
+      `Invalid status transition from ${currentColumn.name} to ${nextColumn.name}.`
+    );
+  }
+
 };
 
-const syncStoryStatus = async (storyId: string) => {
+const syncStoryStatus = async (
+  storyId: string,
+  actor?: Pick<User, "id" | "name">
+) => {
   const story = await prisma.task.findUnique({
     where: {
       id: storyId,
@@ -273,6 +324,9 @@ const syncStoryStatus = async (storyId: string) => {
     return story;
   }
 
+  const previousColumn = columns.find((column) => column.id === story.statusId);
+  const nextColumn = columns.find((column) => column.id === nextStatusId);
+
   const lifecycleDates = await getLifecycleDates(
     story.boardId,
     nextStatusId,
@@ -280,7 +334,7 @@ const syncStoryStatus = async (storyId: string) => {
     story.closedAt
   );
 
-  return prisma.task.update({
+  const updatedStory = await prisma.task.update({
     where: {
       id: storyId,
     },
@@ -290,8 +344,43 @@ const syncStoryStatus = async (storyId: string) => {
       closedAt: lifecycleDates.closedAt,
     },
   });
+  if (actor && previousColumn && nextColumn) {
+    await appendTaskHistory(
+      storyId,
+      buildHistoryEntry(
+        "STATUS_CHANGE",
+        actor,
+        `${actor.name} updated child work items and moved ${story.title} from ${previousColumn.name} to ${nextColumn.name}`,
+        {
+          oldValue: previousColumn.name,
+          newValue: nextColumn.name,
+        }
+      )
+    );
+  }
+
+  return updatedStory;
 };
 
+const getBoardTransitionConfig = async (boardId: string) => {
+  const board = await prisma.board.findUnique({
+    where: {
+      id: boardId,
+    },
+    include: {
+      invalidTransitions: true,
+    },
+  });
+
+  if (!board) {
+    return null;
+  }
+
+  return {
+    leftToRightOnly: Boolean(board.leftToRightOnly),
+    invalidTransitions: board.invalidTransitions,
+  };
+};
 
 export const createWorkflow = async (req: Request, res: Response) => {
     try {
@@ -322,8 +411,10 @@ export const createWorkflow = async (req: Request, res: Response) => {
         const workflow = await prisma.board.create({
             data: {
                 name: workflowName,
-                projectId: projectId
-            }
+                projectId: projectId,
+                leftToRightOnly: false
+            },
+            
         });
         const todoColumn = await prisma.column.create({
             data:{
@@ -376,6 +467,7 @@ export const getWorkflow = async (req: Request, res: Response) => {
                 id: workflowId
             },
             include: {
+                invalidTransitions: true,
                 columns: {
                     orderBy: {
                         order: "asc"
@@ -415,7 +507,13 @@ export const getWorkflow = async (req: Request, res: Response) => {
             id: workflow.id,
             name: workflow.name,
             userRole: userRole,
+            currentUserId: user.id,
+            leftToRightOnly: Boolean(workflow.leftToRightOnly),
+            resolvedColumnId: workflow.resolvedColumnId ?? null,
             columns: workflow.columns,
+            invalidTransitions: workflow.invalidTransitions.map((transition) =>
+                serializeInvalidTransition(transition)
+            ),
             tasks: workflow.tasks.map((task) => serializeTask(task)),
             members: project.members.map((member) => ({
                 id: member.user.id,
@@ -441,6 +539,9 @@ export const getTaskDetails = async (req : Request , res : Response) => {
             {
                 where: {
                     id : workflowId as string 
+                },
+                include: {
+                    invalidTransitions: true,
                 }
             }
         );
@@ -491,10 +592,47 @@ export const getTaskDetails = async (req : Request , res : Response) => {
         if (!userRole) {
             return res.status(403).json({ message: "User is not a member of this project" });
         }
+        const childItems =
+          task.type === "STORY"
+          ? await prisma.task.findMany({
+              where: {
+                parentStoryId: task.id,
+              },
+              include: {
+                assignee: true,
+                reporter: true,
+              },
+              orderBy: {
+                updatedAt: "desc",
+              },
+            })
+          : [];
+        const stories = await prisma.task.findMany({
+          where: {
+            boardId: workflowId as string,
+            type: "STORY",
+            ...(task.type === "STORY"
+              ? {
+                  id: {
+                    not: task.id,
+                  },
+                }
+              : {}),
+          },
+          include: {
+            assignee: true,
+            reporter: true,
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+        });
         res.status(200).json(
             {
                 id : task.id,
                 task : serializeTask(task),
+                childItems: childItems.map((childItem) => serializeTask(childItem)),
+                stories: stories.map((story) => serializeTask(story)),
                 workflowName : workflow.name,
                 projectId : project.id,
                 userRole : userRole,
@@ -515,6 +653,301 @@ export const getTaskDetails = async (req : Request , res : Response) => {
     }
 };
 
+export const updateTransitionRules = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const { leftToRightOnly } = req.body as { leftToRightOnly?: boolean };
+
+    if (!workflowId || typeof leftToRightOnly !== "boolean") {
+      return res.status(400).json({ message: "Workflow ID and transition mode are required" });
+    }
+
+    const workflow = await prisma.board.findUnique({
+        where:{
+            id : workflowId as string 
+        },
+        include:{
+            invalidTransitions:true
+        }
+    });
+    if (!workflow) {
+        return res.status(404).json({ message: "Workflow not found" });
+    }
+    const project = await prisma.project.findUnique({
+        where:{
+            id : workflow.projectId
+        },
+        include:{
+            members: true
+        }
+    });
+    if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+    }
+    const userRole = project.members.find((member) => member.userId === user.id)?.role;
+    if (!userRole) {
+        return res.status(403).json({ message: "User does not have permission to delete tasks" });
+    }
+    if (userRole === "PROJECT_VIEWER") {
+        return res.status(403).json({ message: "User does not have permission to delete tasks" });
+    }
+    const board = await prisma.board.update({
+      where: {
+        id: workflowId as string ,
+      },
+      data: {
+        leftToRightOnly,
+      },
+      include: {
+        invalidTransitions: true,
+      },
+    });
+
+    return res.status(200).json({
+      id: board.id,
+      leftToRightOnly: Boolean(board.leftToRightOnly),
+      invalidTransitions: board.invalidTransitions.map((transition) =>
+        serializeInvalidTransition(transition)
+      ),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateResolvedColumn = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const { resolvedColumnId } = req.body as { resolvedColumnId?: string | null };
+
+    if (!workflowId || resolvedColumnId === undefined) {
+      return res.status(400).json({
+        message: "Workflow ID and resolved column are required",
+      });
+    }
+
+     const workflow = await prisma.board.findUnique(
+            {
+                where: {
+                    id : workflowId as string 
+                },
+                include: {
+                    invalidTransitions: true,
+                }
+            }
+        );
+        if (!workflow) {
+            return res.status(404).json({ message: "Workflow not found" });
+        }
+        const project = await prisma.project.findUnique({
+            where: {
+                id: workflow.projectId
+            },
+            include: {
+                members: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        };
+        const userRole = project.members.find((member) => member.userId === user.id)?.role;
+        if (!userRole) {
+            return res.status(403).json({ message: "User is not a member of this project" });
+        }
+
+    if (resolvedColumnId !== null) {
+      const resolvedColumn = await prisma.column.findUnique({
+        where: {
+          id: resolvedColumnId
+        }
+      });
+      if (!resolvedColumn) {
+        return res.status(400).json({ message: "Invalid resolved column" });
+      }
+    }
+
+    const board = await prisma.board.update({
+      where: {
+        id: workflowId as string,
+      },
+      data: {
+        resolvedColumnId,
+      },
+    });
+
+    return res.status(200).json({
+      id: board.id,
+      resolvedColumnId: board.resolvedColumnId ?? null,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const addInvalidTransition = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const { fromColumnId, toColumnId } = req.body as {
+      fromColumnId?: string;
+      toColumnId?: string;
+    };
+
+    if (!workflowId || !fromColumnId || !toColumnId) {
+      return res.status(400).json({ message: "Workflow ID, from status, and to status are required" });
+    }
+
+    if (fromColumnId === toColumnId) {
+      return res.status(400).json({ message: "A transition must point to a different status" });
+    }
+
+     const workflow = await prisma.board.findUnique(
+            {
+                where: {
+                    id : workflowId as string 
+                },
+                include: {
+                    invalidTransitions: true,
+                }
+            }
+        );
+        if (!workflow) {
+            return res.status(404).json({ message: "Workflow not found" });
+        }
+        const project = await prisma.project.findUnique({
+            where: {
+                id: workflow.projectId
+            },
+            include: {
+                members: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        };
+        const userRole = project.members.find((member) => member.userId === user.id)?.role;
+        if (!userRole) {
+            return res.status(403).json({ message: "User is not a member of this project" });
+        }
+    const [fromColumn, toColumn] = await Promise.all([
+      prisma.column.findUnique({
+        where: {
+          id: fromColumnId
+        }
+      }),
+      prisma.column.findUnique({
+        where: {
+          id: toColumnId
+        }
+      }),
+    ]);
+
+    if (!fromColumn || !toColumn) {
+      return res.status(400).json({ message: "Invalid workflow statuses selected" });
+    }
+
+    const existingTransition = await prisma.invalidTransition.findFirst({
+      where: {
+        boardId: workflowId as string,
+        fromColumnId: fromColumnId as string,
+        toColumnId: toColumnId as string,
+      },
+    });
+
+    if (existingTransition) {
+      return res.status(400).json({ message: "This invalid transition already exists" });
+    }
+
+    const transition = await prisma.invalidTransition.create({
+      data: {
+        boardId: workflowId as string,
+        fromColumnId: fromColumnId as string,
+        toColumnId: toColumnId as string,
+      },
+    });
+
+    return res.status(201).json(serializeInvalidTransition(transition));
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteInvalidTransition = async (req: Request, res: Response) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+    const workflowId = req.params.workflowId;
+    const transitionId = req.params.transitionId;
+
+    if (!workflowId || !transitionId) {
+      return res.status(400).json({ message: "Workflow ID and transition ID are required" });
+    }
+
+     const workflow = await prisma.board.findUnique(
+            {
+                where: {
+                    id : workflowId as string 
+                },
+                include: {
+                    invalidTransitions: true,
+                }
+            }
+        );
+        if (!workflow) {
+            return res.status(404).json({ message: "Workflow not found" });
+        }
+        const project = await prisma.project.findUnique({
+            where: {
+                id: workflow.projectId
+            },
+            include: {
+                members: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        };
+        const userRole = project.members.find((member) => member.userId === user.id)?.role;
+        if (!userRole) {
+            return res.status(403).json({ message: "User is not a member of this project" });
+        }
+
+    const transition = await prisma.invalidTransition.findUnique({
+      where: {
+        id: transitionId as string ,
+      },
+    });
+
+    if (!transition || transition.boardId !== workflowId) {
+      return res.status(404).json({ message: "Invalid transition not found" });
+    }
+
+    await prisma.invalidTransition.delete({
+      where: {
+        id: transitionId as string,
+      },
+    });
+
+    return res.status(200).json({ message: "Invalid transition removed successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 export const updateWorkflow = async (req: Request, res: Response) => {
     try {
         const user = (req as AuthenticatedRequest).user;
@@ -525,6 +958,9 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             where: {
                 id: workflowId as string
             },
+            include: {
+                invalidTransitions: true,
+            }
         });
         if (!workflow) {
             return res.status(404).json({ message: "Workflow not found" });
@@ -573,6 +1009,9 @@ export const createTask = async (req: Request, res: Response) => {
         const workflow = await prisma.board.findUnique({
             where:{
                 id : workflowId
+            },
+            include:{
+                invalidTransitions:true
             }
         })
         if (!workflow) {
@@ -613,8 +1052,9 @@ export const createTask = async (req: Request, res: Response) => {
         if (taskType == "STORY" && parentStoryId){
             return res.status(400).json({ message: "Stories cannot be children of other tasks" });
         };
+        let parentStory = null;
         if (taskType != "STORY" && parentStoryId){
-            const parentStory = await prisma.task.findUnique({
+            parentStory = await prisma.task.findUnique({
                 where:{
                     id: parentStoryId
                 }
@@ -674,8 +1114,32 @@ export const createTask = async (req: Request, res: Response) => {
             targetPath: buildTaskNotificationPath(workflow.projectId, workflowId, task.id),
           });
         }
+        await createNotifications({
+          type: "TASK_CREATED",
+          message: `${user.name} created ${taskType.toLowerCase()} ${task.title}`,
+          userIds: project.members.map((member) => member.userId),
+          actorId: user.id,
+          projectId: workflow.projectId,
+          workflowId,
+          taskId: task.id,
+          targetPath: buildTaskNotificationPath(workflow.projectId, workflowId, task.id),
+        });
+
+        if (parentStory) {
+          await createNotifications({
+            type: "TASK_LINKED_TO_STORY",
+            message: `${user.name} assigned ${task.title} to story ${parentStory.title}`,
+            userIds: project.members.map((member) => member.userId),
+            actorId: user.id,
+            projectId: project.id,
+            workflowId,
+            taskId: task.id,
+            targetPath: buildTaskNotificationPath(project.id, workflowId, task.id),
+          });
+        }
+
         if (taskType !== "STORY" && parentStoryId) {
-            await syncStoryStatus(parentStoryId);
+            await syncStoryStatus(parentStoryId,user);
         }
         return res.status(201).json(serializeTask(task));
     } catch (error) {
@@ -700,6 +1164,9 @@ export const deleteTask = async (req : Request, res : Response) => {
         const workflow = await prisma.board.findUnique({
             where:{
                 id : workflowId
+            },
+            include:{
+                invalidTransitions:true
             }
         });
         if (!workflow) {
@@ -720,9 +1187,6 @@ export const deleteTask = async (req : Request, res : Response) => {
         if (!userRole) {
             return res.status(403).json({ message: "User does not have permission to delete tasks" });
         }
-        if (userRole === "PROJECT_VIEWER") {
-            return res.status(403).json({ message: "User does not have permission to delete tasks" });
-        }
         const task = await prisma.task.findUnique({
             where:{
                 id : taskId
@@ -732,10 +1196,43 @@ export const deleteTask = async (req : Request, res : Response) => {
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
+        if (userRole === "PROJECT_VIEWER" || (userRole === "PROJECT_MEMBER" && task?.reporterId !== user.id)) {
+            return res.status(403).json({ message: "User does not have permission to delete tasks" });
+        }
+        const taskIdsToDelete =
+          task.type === "STORY"
+            ? [
+                taskId,
+                ...(
+                  await prisma.task.findMany({
+                    where: {
+                      parentStoryId: taskId,
+                    },
+                    select: {
+                      id: true,
+                    },
+                  })
+                ).map((childTask) => childTask.id),
+              ]
+            : [taskId];
+        const actorRoleLabel = userRole.replace(/_/g, " ");
+        const deletionTargetPath = project.id
+          ? `/project/${project.id}/workflow/${workflowId}`
+          : null;
+
+        await prisma.comment.deleteMany({
+          where: {
+            taskId: {
+              in: taskIdsToDelete,
+            },
+          },
+        });
         if (task.type === "STORY"){
             await prisma.task.deleteMany({
                 where:{
-                    parentStoryId: task.id
+                    id: {
+                        in: taskIdsToDelete.filter((id) => id !== taskId),
+                    }
                 }
             })
         };
@@ -745,8 +1242,19 @@ export const deleteTask = async (req : Request, res : Response) => {
                 id: taskId
             }
         });
+
+        await createNotifications({
+            type: "TASK_DELETED",
+            message: `${user.name} (${actorRoleLabel}) deleted ${task.type.toLowerCase()} ${task.title}`,
+            userIds: project.members.map((member) => member.userId),
+            actorId: user.id,
+            projectId: project.id,
+            workflowId,
+            taskId: null,
+            targetPath: deletionTargetPath,
+          });
         if (task.parentStoryId) {
-            await syncStoryStatus(task.parentStoryId);
+            await syncStoryStatus(task.parentStoryId,user);
         }
         return res.status(200).json({message: "Task deleted successfully"});
     } catch (error) {
@@ -764,6 +1272,9 @@ export const changeTask = async (req : Request, res : Response) => {
         const workflow = await prisma.board.findUnique({
             where:{
                 id : workflowId
+            },
+            include:{
+                invalidTransitions:true
             }
         });
         if (!workflow) {
@@ -794,6 +1305,7 @@ export const changeTask = async (req : Request, res : Response) => {
             priority,
             assignee,
             dueDate,
+            parentStoryId,
             } = req.body
         const exitingTask = await prisma.task.findUnique({
             where:{
@@ -810,17 +1322,31 @@ export const changeTask = async (req : Request, res : Response) => {
         const updateData: Prisma.TaskUncheckedUpdateInput = {};
         let statusHistoryEntry: TaskHistoryEntry | null = null;
         let assigneeHistoryEntry: TaskHistoryEntry | null = null;
+        let editHistoryEntry: TaskHistoryEntry | null = null;
+        let storyAssignmentHistoryEntry: TaskHistoryEntry | null = null;
         let statusNotificationPayload:
           | Parameters<typeof createNotifications>[0]
           | null = null;
         let assignmentNotificationPayload:
           | Parameters<typeof createNotifications>[0]
           | null = null;
-
+        let storyAssignmentNotificationPayload:
+        | Parameters<typeof createNotifications>[0]
+        | null = null;
+      const updatedFields: string[] = [];
         updateData.title = title;
+        if ( title != exitingTask.title) {
+            updatedFields.push("title");
+        }
         updateData.description = description;
+        if ( description != exitingTask.description) {
+            updatedFields.push("description");
+        }
         updateData.priority = priority;
-        updateData.dueDate = dueDate;
+        if ( priority != exitingTask.priority) {
+            updatedFields.push("priority");
+        }
+       
 
         if ( status !== undefined){
             const nextColumn = await prisma.column.findUnique({
@@ -877,7 +1403,9 @@ export const changeTask = async (req : Request, res : Response) => {
           };
         };
         updateData.dueDate = parseDueDate(dueDate);
-
+        if ( updateData.dueDate != exitingTask.dueDate) {
+            updatedFields.push("due date");
+        }
         if ( assignee !== undefined){
             const assigneeObject = await prisma.user.findUnique({
                 where: {
@@ -911,6 +1439,74 @@ export const changeTask = async (req : Request, res : Response) => {
           };
         }
 
+        if ("parentStoryId" in req.body) {
+          if (exitingTask.type === "STORY" && parentStoryId) {
+            return res.status(400).json({
+              message: "Stories cannot be children of other stories",
+            });
+          }
+
+          const normalizedParentStoryId =
+            typeof parentStoryId === "string" && parentStoryId.trim() === ""
+              ? null
+              : (parentStoryId ?? null);
+          const previousParentStoryId = exitingTask.parentStoryId ?? null;
+
+          const nextParentStory =
+            exitingTask.type !== "STORY"
+              ? await prisma.task.findUnique({
+                  where: {
+                    id: normalizedParentStoryId,
+                  },
+                })
+              : null;
+          const nextParentStoryId = nextParentStory?.id ?? null;
+
+          if (previousParentStoryId !== nextParentStoryId) {
+            updateData.parentStoryId = nextParentStoryId;
+
+            const previousStoryTitle = previousParentStoryId
+              ? (
+                  await prisma.task.findUnique({
+                    where: {
+                      id: previousParentStoryId,
+                    },
+                    select: {
+                      title: true,
+                    },
+                  })
+                )?.title ?? null
+              : null;
+            const nextStoryTitle = nextParentStory?.title ?? null;
+
+            storyAssignmentHistoryEntry = buildHistoryEntry(
+              "STORY_LINK_CHANGE",
+              user,
+              nextStoryTitle
+                ? `${user.name} assigned ${exitingTask.title} to story ${nextStoryTitle}`
+                : `${user.name} removed ${exitingTask.title} from story ${previousStoryTitle ?? "Unknown story"}`,
+              {
+                oldValue: previousStoryTitle,
+                newValue: nextStoryTitle,
+              }
+            );
+
+            if (nextStoryTitle) {
+              storyAssignmentNotificationPayload = {
+                type: "TASK_LINKED_TO_STORY",
+                message: `${user.name} assigned ${exitingTask.title} to story ${nextStoryTitle}`,
+                userIds: project.members.map((member) => member.userId),
+                actorId: user.id,
+                projectId: project.id,
+                workflowId,
+                taskId,
+                targetPath: buildTaskNotificationPath(project.id, workflowId, taskId),
+              };
+            }
+          }
+        }
+
+
         const updatedTask = await prisma.task.update({
             where: {
                 id: exitingTask.id
@@ -922,12 +1518,28 @@ export const changeTask = async (req : Request, res : Response) => {
             },
         });
 
+        if (updatedFields.length > 0) {
+          editHistoryEntry = buildHistoryEntry(
+            "TASK_UPDATED",
+            user,
+            `${user.name} updated ${updatedFields.join(", ")} for ${updatedTask.title}`
+          );
+        }
+
         if (statusHistoryEntry) {
           await appendTaskHistory(taskId, statusHistoryEntry);
         }
 
         if (assigneeHistoryEntry) {
           await appendTaskHistory(taskId, assigneeHistoryEntry);
+        }
+
+        if (editHistoryEntry) {
+          await appendTaskHistory(taskId, editHistoryEntry);
+        }
+
+        if (storyAssignmentHistoryEntry) {
+          await appendTaskHistory(taskId, storyAssignmentHistoryEntry);
         }
 
         if (statusNotificationPayload) {
@@ -937,10 +1549,23 @@ export const changeTask = async (req : Request, res : Response) => {
         if (assignmentNotificationPayload) {
           await createNotifications(assignmentNotificationPayload);
         }
-        if (updatedTask.parentStoryId){
-            await syncStoryStatus(updatedTask.parentStoryId);
-        }
-        return res.status(200).json(serializeTask(updatedTask));
+        if (storyAssignmentNotificationPayload) {
+      await createNotifications(storyAssignmentNotificationPayload);
+    }
+
+    if ("parentStoryId" in req.body && exitingTask.parentStoryId !== updatedTask.parentStoryId) {
+      if (exitingTask.parentStoryId) {
+        await syncStoryStatus(exitingTask.parentStoryId, user);
+      }
+
+      if (updatedTask.parentStoryId) {
+        await syncStoryStatus(updatedTask.parentStoryId, user);
+      }
+    } else if (updatedTask.parentStoryId) {
+      await syncStoryStatus(updatedTask.parentStoryId, user);
+    }
+
+      return res.status(200).json(serializeTask(updatedTask));
     } catch (error) {
       console.error("Error updating task:", error);
         res.status(500).json({ message: "Internal server error" , error});
@@ -960,6 +1585,9 @@ export const addColumn = async (req : Request, res : Response) => {
         const workflow = await prisma.board.findUnique({
             where:{
                 id : workflowId
+            },
+            include: {
+                    invalidTransitions: true,
             }
         });
         if (!workflow) {
@@ -1019,6 +1647,9 @@ export const updateColumn = async (req: Request, res: Response) => {
     const workflow = await prisma.board.findUnique({
       where: {
         id: workflowId as string
+      },
+      include: {
+        invalidTransitions: true,
       }
     });
     if (!workflow) {
@@ -1088,6 +1719,9 @@ export const reorderColumns = async (req: Request, res: Response) => {
       where: {
         id: workflowId as string,
       },
+      include: {
+        invalidTransitions: true,
+      }
     });
     if (!workflow) {
       return res.status(404).json({ message: "Workflow not found" });
@@ -1158,6 +1792,9 @@ export const deleteColumn = async (req: Request, res: Response) => {
       where: {
         id: workflowId as string,
       },
+      include: {
+        invalidTransitions: true,
+      }
     });
     if (!workflow) {
       return res.status(404).json({ message: "Workflow not found" });
@@ -1214,6 +1851,24 @@ export const deleteColumn = async (req: Request, res: Response) => {
       },
     });
 
+    await prisma.invalidTransition.deleteMany({
+      where: {
+        boardId: workflowId as string,
+        OR: [{ fromColumnId: columnId as string }, { toColumnId: columnId as string }],
+      },
+    });
+
+    if (workflow.resolvedColumnId === columnId) {
+      await prisma.board.update({
+        where: {
+          id: workflowId as string,
+        },
+        data: {
+          resolvedColumnId: null,
+        },
+      });
+    }
+
     const columnsAfterDelete = await prisma.column.findMany({
       where: {
         boardId: workflowId as string,
@@ -1255,6 +1910,9 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
       where: {
         id: workflowId as string,
       },
+      include: {
+        invalidTransitions: true,
+      }
     });
     if (!workflow) {
       return res.status(404).json({ message: "Workflow not found" });
@@ -1277,6 +1935,12 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
     }
 
     await prisma.task.deleteMany({
+      where: {
+        boardId: workflowId as string,
+      },
+    });
+
+    await prisma.invalidTransition.deleteMany({
       where: {
         boardId: workflowId as string,
       },

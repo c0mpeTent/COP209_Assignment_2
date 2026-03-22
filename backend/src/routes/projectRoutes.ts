@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createProject , deleteProject , getProjects, getProject , updateProject, changeProjectArchive } from "../controllers/projectController.js";
 import { addProjectMember , changeProjectMemberRole , deleteProjectMember } from "../controllers/projectMemberController.js";
-import { createWorkflow , createTask , getWorkflow , deleteTask  , getTaskDetails , updateWorkflow , changeTask , addColumn,updateColumn,reorderColumns,deleteColumn,deleteWorkflow} from "../controllers/projectWorkflowController.js";
+import { createWorkflow , createTask , getWorkflow , deleteTask  , getTaskDetails , updateWorkflow , changeTask , addColumn,updateColumn,reorderColumns,deleteColumn,deleteWorkflow ,updateTransitionRules,updateResolvedColumn,addInvalidTransition, deleteInvalidTransition,} from "../controllers/projectWorkflowController.js";
 const router = Router();
 
 // URL will be POST /api/project/
@@ -29,6 +29,10 @@ router.patch("/update-column/:workflowId/:columnId", updateColumn);
 router.patch("/reorder-columns/:workflowId", reorderColumns);
 router.delete("/delete-column/:workflowId/:columnId", deleteColumn);
 router.delete("/delete-workflow/:workflowId", deleteWorkflow);
+router.patch("/transition-rules/:workflowId", updateTransitionRules);
+router.patch("/resolved-column/:workflowId", updateResolvedColumn);
+router.post("/invalid-transition/:workflowId", addInvalidTransition);
+router.delete("/invalid-transition/:workflowId/:transitionId", deleteInvalidTransition);
 
 
 export default router;
