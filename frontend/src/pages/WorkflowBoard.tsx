@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import KanbanColumn from "../components/kanban/KhanbanColumn";
 import CreateTaskModal from "../components/kanban/CreateTaskModal";
@@ -14,6 +14,11 @@ import type {
   UpdateTaskPayload,
 } from "../types/kanban";
 import styles from "./WorkflowBoard.module.css";
+
+type MoveFeedback = {
+  tone: "loading" | "success" | "error";
+  message: string;
+};
 
 const WorkflowBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,24 +36,51 @@ const WorkflowBoard: React.FC = () => {
   const [boardId, setBoardId] = useState("");
   const [boardMembers, setBoardMembers] = useState<BoardMemberOption[]>([]);
   const [leftToRightOnly, setLeftToRightOnly] = useState(false);
+  const [resolvedColumnId, setResolvedColumnId] = useState<string | null>(null);
   const [invalidTransitions, setInvalidTransitions] = useState<InvalidTransition[]>([]);
   const [invalidFromColumnId, setInvalidFromColumnId] = useState("");
   const [invalidToColumnId, setInvalidToColumnId] = useState("");
   const [newColName, setNewColName] = useState("");
   const [newColWip, setNewColWip] = useState(0);
   const [showAddColumn, setShowAddColumn] = useState(false);
+  const [showResolvedColumnModal, setShowResolvedColumnModal] = useState(false);
   const [showTransitionRules, setShowTransitionRules] = useState(false);
   const [showTransitionInfo, setShowTransitionInfo] = useState(false);
+  const [selectedResolvedColumnId, setSelectedResolvedColumnId] = useState("");
   const [isEditingWorkflowName, setIsEditingWorkflowName] = useState(false);
   const [workflowNameInput, setWorkflowNameInput] = useState("");
   const [isSavingWorkflowName, setIsSavingWorkflowName] = useState(false);
   const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+  const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null);
   const [boardActionLabel, setBoardActionLabel] = useState<string | null>(null);
+  const [moveFeedback, setMoveFeedback] = useState<MoveFeedback | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const isWorkflowAdmin =
     viewerRole === "PROJECT_ADMIN" || viewerRole === "GLOBAL_ADMIN";
   const canEditTasks = viewerRole !== "PROJECT_VIEWER";
   const isBoardActionPending = Boolean(boardActionLabel);
+  const isMovePending = moveFeedback?.tone === "loading";
+  const isBoardBusy = isBoardActionPending || isMovePending;
+
+  const clearFeedbackTimeout = useCallback(() => {
+    if (feedbackTimeoutRef.current !== null) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+  }, []);
+
+  const showTimedMoveFeedback = useCallback(
+    (feedback: MoveFeedback, durationMs = 2000) => {
+      clearFeedbackTimeout();
+      setMoveFeedback(feedback);
+      feedbackTimeoutRef.current = window.setTimeout(() => {
+        setMoveFeedback(null);
+        feedbackTimeoutRef.current = null;
+      }, durationMs);
+    },
+    [clearFeedbackTimeout]
+  );
 
   const fetchBoardData = useCallback(async () => {
     if (!workflowId || !projectId) {
@@ -75,6 +107,7 @@ const WorkflowBoard: React.FC = () => {
       setWorkflowNameInput(data.name);
       setBoardMembers(data.members ?? []);
       setLeftToRightOnly(Boolean(data.leftToRightOnly));
+      setResolvedColumnId(data.resolvedColumnId ?? null);
       setInvalidTransitions(data.invalidTransitions ?? []);
       setColumns(
         data.columns
@@ -110,6 +143,8 @@ const WorkflowBoard: React.FC = () => {
   useEffect(() => {
     fetchBoardData();
   }, [fetchBoardData]);
+
+  useEffect(() => () => clearFeedbackTimeout(), [clearFeedbackTimeout]);
 
   const orderedColumns = useMemo(
     () => columns.slice().sort((a, b) => a.order - b.order),
@@ -147,6 +182,23 @@ const WorkflowBoard: React.FC = () => {
 
   const defaultStoryStatusId = orderedColumns[0]?.id ?? "";
 
+  const effectiveResolvedColumn = useMemo(() => {
+    const configuredColumn =
+      resolvedColumnId
+        ? orderedColumns.find((column) => column.id === resolvedColumnId) ?? null
+        : null;
+
+    if (configuredColumn) {
+      return configuredColumn;
+    }
+
+    return (
+      orderedColumns.find((column) => column.title.trim().toLowerCase() === "done") ??
+      orderedColumns[orderedColumns.length - 1] ??
+      null
+    );
+  }, [orderedColumns, resolvedColumnId]);
+
   const getColumnTitle = useCallback(
     (columnId: string) =>
       orderedColumns.find((column) => column.id === columnId)?.title ?? "Unknown",
@@ -168,9 +220,18 @@ const WorkflowBoard: React.FC = () => {
       stories.map((story) => ({
         ...story,
         statusLabel: getColumnTitle(story.status),
+        canDelete:
+          viewerRole === "GLOBAL_ADMIN" ||
+          viewerRole === "PROJECT_ADMIN" ||
+          story.reporterId === currentUserId,
       })),
-    [getColumnTitle, stories]
+    [currentUserId, getColumnTitle, stories, viewerRole]
   );
+
+  const openResolvedColumnModal = () => {
+    setSelectedResolvedColumnId(effectiveResolvedColumn?.id ?? "");
+    setShowResolvedColumnModal(true);
+  };
 
   const handleUpdateWorkflowName = async () => {
     if (!boardId || !workflowNameInput.trim()) {
@@ -273,6 +334,38 @@ const WorkflowBoard: React.FC = () => {
     }
   };
 
+  const handleUpdateResolvedColumn = async () => {
+    if (!boardId || !selectedResolvedColumnId) {
+      return;
+    }
+
+    try {
+      setBoardActionLabel("Saving resolved status...");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/resolved-column/${boardId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ resolvedColumnId: selectedResolvedColumnId }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not update resolved column");
+      }
+
+      setResolvedColumnId(data.resolvedColumnId ?? null);
+      setShowResolvedColumnModal(false);
+    } catch (error) {
+      console.error("Resolved column update failed:", error);
+      alert(error instanceof Error ? error.message : "Could not update resolved column");
+    } finally {
+      setBoardActionLabel(null);
+    }
+  };
+
   const handleDeleteInvalidTransition = async (transitionId: string) => {
     try {
       setBoardActionLabel("Removing invalid transition...");
@@ -305,7 +398,7 @@ const WorkflowBoard: React.FC = () => {
     sourceColId: string,
     targetColId: string
   ) => {
-    if (sourceColId === targetColId) {
+    if (sourceColId === targetColId || isBoardBusy) {
       return;
     }
 
@@ -319,8 +412,24 @@ const WorkflowBoard: React.FC = () => {
       return;
     }
 
+    const previousTasks = tasks;
+
     try {
-      setBoardActionLabel("Moving task...");
+      clearFeedbackTimeout();
+      setMoveFeedback({
+        tone: "loading",
+        message: "Moving task, please wait...",
+      });
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: targetColId,
+              }
+            : task
+        )
+      );
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-task/${boardId}/${taskId}`,
         {
@@ -336,12 +445,24 @@ const WorkflowBoard: React.FC = () => {
         throw new Error(data.message || "Could not move task");
       }
 
-      await fetchBoardData();
+      setTasks((currentTasks) =>
+        currentTasks.map((task) => (task.id === data.id ? data : task))
+      );
+      void fetchBoardData();
+      showTimedMoveFeedback({
+        tone: "success",
+        message: "Task moved successfully.",
+      });
     } catch (error) {
       console.error("Task move failed:", error);
-      alert(error instanceof Error ? error.message : "Could not move task");
-    } finally {
-      setBoardActionLabel(null);
+      setTasks(previousTasks);
+      showTimedMoveFeedback(
+        {
+          tone: "error",
+          message: error instanceof Error ? error.message : "Could not move task",
+        },
+        3000
+      );
     }
   };
 
@@ -609,6 +730,45 @@ const WorkflowBoard: React.FC = () => {
     navigate(`/project/${projectId}/workflow/${workflowId}/task/${storyId}`);
   };
 
+  const handleDeleteStory = async (
+    event: React.MouseEvent,
+    storyId: string
+  ) => {
+    event.stopPropagation();
+
+    const confirmed = window.confirm(
+      "Do you want to delete the story? All the tasks and bugs inside it will get deleted with the story."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingStoryId(storyId);
+      setBoardActionLabel("Deleting story...");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-task/${boardId}/${storyId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Could not delete story");
+      }
+
+      await fetchBoardData();
+    } catch (error) {
+      console.error("Story deletion failed:", error);
+      alert(error instanceof Error ? error.message : "Could not delete story");
+    } finally {
+      setDeletingStoryId(null);
+      setBoardActionLabel(null);
+    }
+  };
+
   return (
     <div className={styles.boardWrapper}>
       <header className={styles.boardHeader}>
@@ -661,6 +821,11 @@ const WorkflowBoard: React.FC = () => {
             )}
           </div>
           <p className={styles.boardSubtitle}>{boardSubtitle}</p>
+          {effectiveResolvedColumn && (
+            <p className={styles.boardMetaNote}>
+              Resolved At Column: {effectiveResolvedColumn.title}
+            </p>
+          )}
           {boardActionLabel && (
             <p className={styles.boardActionState}>{boardActionLabel}</p>
           )}
@@ -672,25 +837,36 @@ const WorkflowBoard: React.FC = () => {
               type="button"
               onClick={() => setShowTransitionRules((current) => !current)}
               className={styles.transitionPanelBtn}
-              disabled={isBoardActionPending}
+              disabled={isBoardBusy}
             >
               {showTransitionRules ? "Close Transition Rules" : "Change Transition Rules"}
             </button>
             {!showAddColumn ? (
-              <button
-                onClick={() => setShowAddColumn(true)}
-                className={styles.addColBtn}
-                disabled={isBoardActionPending}
-              >
-                + Add Column
-              </button>
+              <>
+                <button
+                  onClick={() => setShowAddColumn(true)}
+                  className={styles.addColBtn}
+                  disabled={isBoardBusy}
+                >
+                  + Add Column
+                </button>
+                <button
+                  type="button"
+                  onClick={openResolvedColumnModal}
+                  className={styles.workflowSettingsBtn}
+                  disabled={isBoardBusy}
+                  title="Change resolved timestamp column"
+                >
+                  R
+                </button>
+              </>
             ) : (
               <form onSubmit={handleCreateColumn} className={styles.addColForm}>
                 <input
                   type="text"
                   placeholder="Column Name"
                   value={newColName}
-                  disabled={isBoardActionPending}
+                  disabled={isBoardBusy}
                   onChange={(e) => setNewColName(e.target.value)}
                   required
                 />
@@ -698,16 +874,16 @@ const WorkflowBoard: React.FC = () => {
                   type="number"
                   placeholder="WIP Limit"
                   value={newColWip}
-                  disabled={isBoardActionPending}
+                  disabled={isBoardBusy}
                   onChange={(e) => setNewColWip(parseInt(e.target.value, 10) || 0)}
                   min="0"
                 />
-                <button type="submit" disabled={isBoardActionPending}>
+                <button type="submit" disabled={isBoardBusy}>
                   {isBoardActionPending ? "Creating..." : "Create"}
                 </button>
                 <button
                   type="button"
-                  disabled={isBoardActionPending}
+                  disabled={isBoardBusy}
                   onClick={() => setShowAddColumn(false)}
                 >
                   Cancel
@@ -730,7 +906,7 @@ const WorkflowBoard: React.FC = () => {
                     leftToRightOnly ? styles.transitionModeBtnActive : ""
                   }`}
                   onClick={() => void handleUpdateTransitionMode(true)}
-                  disabled={isBoardActionPending || leftToRightOnly}
+                  disabled={isBoardBusy || leftToRightOnly}
                 >
                   Allow Left to Right Only
                 </button>
@@ -739,7 +915,7 @@ const WorkflowBoard: React.FC = () => {
                     !leftToRightOnly ? styles.transitionModeBtnActive : ""
                   }`}
                   onClick={() => void handleUpdateTransitionMode(false)}
-                  disabled={isBoardActionPending || !leftToRightOnly}
+                  disabled={isBoardBusy || !leftToRightOnly}
                 >
                   Set Invalid Status Transition
                 </button>
@@ -750,7 +926,7 @@ const WorkflowBoard: React.FC = () => {
             type="button"
             className={styles.transitionInfoBtn}
             onClick={() => setShowTransitionInfo((current) => !current)}
-            disabled={isBoardActionPending}
+            disabled={isBoardBusy}
             title="Show transition rule help"
           >
             i
@@ -772,7 +948,7 @@ const WorkflowBoard: React.FC = () => {
 
         {leftToRightOnly && (
           <p className={styles.transitionModeNote}>
-            Currently left to right transitions are valid in this workflow. To customize specific invalid transitions, switch to "Set Invalid Status Transition" mode.
+            Only left to right transitions are valid in this workflow.
           </p>
         )}
 
@@ -782,7 +958,7 @@ const WorkflowBoard: React.FC = () => {
               <select
                 value={invalidFromColumnId}
                 onChange={(event) => setInvalidFromColumnId(event.target.value)}
-                disabled={isBoardActionPending}
+                disabled={isBoardBusy}
               >
                 {orderedColumns.map((column) => (
                   <option key={column.id} value={column.id}>
@@ -793,7 +969,7 @@ const WorkflowBoard: React.FC = () => {
               <select
                 value={invalidToColumnId}
                 onChange={(event) => setInvalidToColumnId(event.target.value)}
-                disabled={isBoardActionPending}
+                disabled={isBoardBusy}
               >
                 {orderedColumns.map((column) => (
                   <option key={column.id} value={column.id}>
@@ -805,7 +981,7 @@ const WorkflowBoard: React.FC = () => {
                 className={styles.addInvalidTransitionBtn}
                 onClick={handleAddInvalidTransition}
                 disabled={
-                  isBoardActionPending ||
+                  isBoardBusy ||
                   !invalidFromColumnId ||
                   !invalidToColumnId ||
                   invalidFromColumnId === invalidToColumnId
@@ -828,7 +1004,7 @@ const WorkflowBoard: React.FC = () => {
                       <button
                         className={styles.removeTransitionBtn}
                         onClick={() => void handleDeleteInvalidTransition(transition.id)}
-                        disabled={isBoardActionPending}
+                        disabled={isBoardBusy}
                       >
                         Remove
                       </button>
@@ -848,7 +1024,7 @@ const WorkflowBoard: React.FC = () => {
           {canEditTasks && (
             <button
               className={styles.storyActionBtn}
-              disabled={isBoardActionPending}
+              disabled={isBoardBusy}
               onClick={() => setIsStoryModalOpen(true)}
             >
               + Add Story
@@ -866,7 +1042,21 @@ const WorkflowBoard: React.FC = () => {
                 onClick={() => openStoryPage(story.id)}
               >
                 <span className={styles.storyCardTitle}>{story.title}</span>
-                <span className={styles.storyCardStatus}>{story.statusLabel}</span>
+                <span className={styles.storyCardActions}>
+                  <span className={styles.storyCardStatus}>{story.statusLabel}</span>
+                  {story.canDelete && (
+                    <button
+                      type="button"
+                      className={styles.storyDeleteBtn}
+                      onClick={(event) => void handleDeleteStory(event, story.id)}
+                      disabled={isBoardBusy || deletingStoryId === story.id}
+                      title="Delete Story"
+                      aria-label="Delete Story"
+                    >
+                      {deletingStoryId === story.id ? "..." : "×"}
+                    </button>
+                  )}
+                </span>
               </button>
             ))
           ) : (
@@ -874,6 +1064,25 @@ const WorkflowBoard: React.FC = () => {
           )}
         </div>
       </section>
+
+      {moveFeedback && (
+        <section
+          className={`${styles.moveFeedbackBar} ${
+            moveFeedback.tone === "loading"
+              ? styles.moveFeedbackLoading
+              : moveFeedback.tone === "success"
+                ? styles.moveFeedbackSuccess
+                : styles.moveFeedbackError
+          }`}
+        >
+          <div className={styles.moveFeedbackContent}>
+            {moveFeedback.tone === "loading" && (
+              <span className={styles.moveFeedbackSpinner} aria-hidden="true" />
+            )}
+            <span>{moveFeedback.message}</span>
+          </div>
+        </section>
+      )}
 
       <div className={styles.kanbanContainer}>
         {displayColumns.map((column) => (
@@ -884,6 +1093,7 @@ const WorkflowBoard: React.FC = () => {
             boardId={boardId}
             userRole={viewerRole}
             currentUserId={currentUserId}
+            isBoardBusy={isBoardBusy}
             members={boardMembers}
             stories={stories}
             onMoveTask={handleMoveTask}
@@ -916,6 +1126,64 @@ const WorkflowBoard: React.FC = () => {
             setIsStoryModalOpen(false);
           }}
         />
+      )}
+
+      {isWorkflowAdmin && showResolvedColumnModal && (
+        <div
+          className={styles.settingsOverlay}
+          onClick={() => setShowResolvedColumnModal(false)}
+        >
+          <div
+            className={styles.settingsModal}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.settingsModalHeader}>
+              <h2 className={styles.settingsTitle}>Resolved At Column</h2>
+              <p className={styles.settingsSubtitle}>
+                Choose which workflow status should set the resolved timestamp.
+              </p>
+            </div>
+
+            <label className={styles.settingsField}>
+              <span>Resolved when item reaches</span>
+              <select
+                value={selectedResolvedColumnId}
+                onChange={(event) => setSelectedResolvedColumnId(event.target.value)}
+                disabled={isBoardBusy}
+              >
+                {orderedColumns.map((column) => (
+                  <option key={column.id} value={column.id}>
+                    {column.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <p className={styles.settingsHint}>
+              Default fallback stays <strong>Done</strong>, and if Done does not exist
+              the last column will be used.
+            </p>
+
+            <div className={styles.settingsActions}>
+              <button
+                type="button"
+                className={styles.settingsCancelBtn}
+                onClick={() => setShowResolvedColumnModal(false)}
+                disabled={isBoardBusy}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.settingsSaveBtn}
+                onClick={() => void handleUpdateResolvedColumn()}
+                disabled={isBoardBusy || !selectedResolvedColumnId}
+              >
+                {isBoardActionPending ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
