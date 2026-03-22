@@ -554,7 +554,15 @@ export const getTaskDetails = async (req : Request , res : Response) => {
             },
             include: {
                 assignee: true,
-                reporter: true
+                reporter: true,
+                comments: {
+                    include: {
+                        author: true,
+                    },
+                    orderBy: {
+                        createdAt: "asc",
+                    },
+                },
             }
         });
         if (!task) {
@@ -627,10 +635,36 @@ export const getTaskDetails = async (req : Request , res : Response) => {
             updatedAt: "desc",
           },
         });
+        const serializeUser = (user: User) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  avatarUrl: user.avatarUrl,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
+const serializeComment = (comment: any) => ({
+  id: comment.id,
+  text: comment.text,
+  taskId: comment.taskId,
+  authorId: comment.authorId,
+  authorName: comment.author.name,
+  author: serializeUser(comment.author),
+  createdAt: comment.createdAt,
+  updatedAt: comment.updatedAt,
+});
+
+const taskWithComments = {
+    ...serializeTask(task),
+    comments: task.comments.map((comment) => serializeComment(comment)),
+    history: task.history ?? [],
+};
+
         res.status(200).json(
             {
                 id : task.id,
-                task : serializeTask(task),
+                task : taskWithComments,
                 childItems: childItems.map((childItem) => serializeTask(childItem)),
                 stories: stories.map((story) => serializeTask(story)),
                 workflowName : workflow.name,
