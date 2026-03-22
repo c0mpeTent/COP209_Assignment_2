@@ -215,10 +215,10 @@ const Dashboard: React.FC = () => {
               ? "No archived projects right now."
               : "No active projects yet. Start by creating your first one."
           }
-          onDelete={handleDeleteProject}
-          onArchiveToggle={handleArchiveToggle}
           pendingDeleteId={pendingDeleteProjectId}
           pendingArchiveId={pendingArchiveProjectId}
+          onDelete={handleDeleteProject}
+          onArchiveToggle={handleArchiveToggle}
         />
       </div>
     </div>

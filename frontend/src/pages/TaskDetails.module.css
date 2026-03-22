@@ -24,9 +24,11 @@
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
 }
 
+
 .priorityCritical {
   border-top-color: #ff4d4d;
 }
+
 
 .priorityHigh {
   border-top-color: #ffa500;
@@ -35,7 +37,6 @@
 .priorityMedium {
   border-top-color: #52a0ff;
 }
-
 .priorityLow {
   border-top-color: #28a745;
 }
@@ -437,7 +438,6 @@
   .layoutGrid {
     grid-template-columns: 1fr;
   }
-
   .metaGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -471,7 +471,6 @@
   .formActions {
     flex-direction: column;
   }
-
   .metaGrid {
     grid-template-columns: 1fr;
   }

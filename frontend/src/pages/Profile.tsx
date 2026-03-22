@@ -20,9 +20,7 @@ const getResolvedAvatarUrl = (avatarUrl?: string) => {
 
   if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
     if (avatarUrl.includes("undefined/uploads/")) {
-      return avatarUrl.replace(
-        "undefined/uploads/",
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`,
+      return avatarUrl.replace( "undefined/uploads/", `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`,
       );
     }
 
@@ -30,8 +28,7 @@ const getResolvedAvatarUrl = (avatarUrl?: string) => {
   }
 
   if (avatarUrl.startsWith("undefined/uploads/")) {
-    return avatarUrl.replace(
-      "undefined/uploads/",
+    return avatarUrl.replace( "undefined/uploads/",
       `${import.meta.env.VITE_BACKEND_ORIGIN}/uploads/`,
     );
   }
@@ -50,6 +47,7 @@ const getResolvedAvatarUrl = (avatarUrl?: string) => {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -124,6 +122,7 @@ const Profile: React.FC = () => {
         credentials: "include"
       });
 
+
       if (response.ok) {
         const data = await response.json();
         setUser(data.user); // Update UI with new avatar URL 
@@ -193,6 +192,7 @@ const Profile: React.FC = () => {
     } catch (error) {
       console.error("Profile update failed:", error);
       setFormError("Profile update failed. Please try again.");
+
     } finally {
       setIsSaving(false);
     }
@@ -247,8 +247,10 @@ const Profile: React.FC = () => {
           <div className={styles.infoGroup}>
             <label className={styles.label}>User Name:</label>
             <p className={styles.valueBox}>{user?.name}</p>
+
           </div>
           <div className={styles.infoGroup}>
+
             <label className={styles.label}>Email Address:</label>
             <p className={styles.valueBox}>{user?.email}</p>
           </div>
@@ -265,6 +267,7 @@ const Profile: React.FC = () => {
             <div className={styles.modalHeader}>
               <div>
                 <h2 className={styles.modalTitle}>Edit Profile</h2>
+
                 <p className={styles.modalSubtitle}>Update your account details.</p>
               </div>
               <button className={styles.closeBtn} onClick={closeEditModal} type="button">
@@ -301,6 +304,7 @@ const Profile: React.FC = () => {
 
               <div className={styles.formField}>
                 <label className={styles.modalLabel}>New Password</label>
+
                 <input
                   className={styles.modalInput}
                   type="password"
@@ -313,15 +317,14 @@ const Profile: React.FC = () => {
               </div>
 
               <div className={styles.formField}>
+
                 <label className={styles.modalLabel}>Confirm Password</label>
                 <input
                   className={styles.modalInput}
                   type="password"
                   value={formState.confirmPassword}
                   onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      confirmPassword: event.target.value,
+                    setFormState((current) => ({ ...current, confirmPassword: event.target.value,
                     }))
                   }
                   placeholder="Repeat new password"
@@ -338,8 +341,7 @@ const Profile: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button className={styles.saveBtn} type="submit" disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
+                <button className={styles.saveBtn} type="submit" disabled={isSaving}> {isSaving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>

@@ -70,6 +70,7 @@ type AvatarNameProps = {
 };
 
 const AvatarName: React.FC<AvatarNameProps> = ({ user, fallbackText }) => {
+
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const resolvedAvatarUrl = getResolvedAvatarUrl(user?.avatarUrl);
   const displayName = user?.name || fallbackText;
@@ -85,15 +86,15 @@ const AvatarName: React.FC<AvatarNameProps> = ({ user, fallbackText }) => {
               className={styles.smallAvatarImage}
               onError={() => setAvatarLoadFailed(true)}
             />
-          ) : (
-            <span>{displayName[0]}</span>
-          )}
+          ) : ( <span>{displayName[0]}</span> )}
         </span>
       ) : null}
       <span className={styles.personName}>{displayName}</span>
     </span>
   );
 };
+
+
 
 const TaskDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -106,11 +107,13 @@ const TaskDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
+
   const [workflowName, setWorkflowName] = useState("Workflow");
   const [viewerRole, setViewerRole] = useState<ProjectRole>("PROJECT_VIEWER");
   const [currentUserId, setCurrentUserId] = useState("");
   const [members, setMembers] = useState<BoardMemberOption[]>([]);
   const [columns, setColumns] = useState<TaskDetailsResponse["columns"]>([]);
+
   const [childItems, setChildItems] = useState<Task[]>([]);
   const [stories, setStories] = useState<Task[]>([]);
   const [formData, setFormData] = useState<TaskFormState | null>(null);
@@ -119,7 +122,7 @@ const TaskDetails: React.FC = () => {
   const [selectedStoryId, setSelectedStoryId] = useState("");
   const [isAssigningStory, setIsAssigningStory] = useState(false);
 
-  const isReadOnly = viewerRole === "PROJECT_VIEWER";
+  const isReadOnly =viewerRole === "PROJECT_VIEWER";
 
   const loadTaskDetails = useCallback(async () => {
     if (!workflowId || !taskId) {
@@ -128,8 +131,7 @@ const TaskDetails: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/task/${workflowId}/${taskId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/task/${workflowId}/${taskId}`,
         {
           credentials: "include",
         }
@@ -149,6 +151,7 @@ const TaskDetails: React.FC = () => {
       setColumns(details.columns.sort((left, right) => left.order - right.order));
       setChildItems(details.childItems ?? []);
       setStories(details.stories ?? []);
+
       setSelectedStoryId(details.task.parentStoryId ?? "");
       setFormData({
         title: details.task.title,
@@ -166,9 +169,7 @@ const TaskDetails: React.FC = () => {
     }
   }, [taskId, workflowId]);
 
-  useEffect(() => {
-    void loadTaskDetails();
-  }, [loadTaskDetails]);
+  useEffect(() => { void loadTaskDetails(); }, [loadTaskDetails]);
 
   const currentColumn = useMemo(
     () => columns.find((column) => column.id === task?.status),
@@ -210,8 +211,7 @@ const TaskDetails: React.FC = () => {
   );
 
   const childItemsWithStatus = useMemo(
-    () =>
-      childItems.map((childItem) => ({
+    () => childItems.map((childItem) => ({
         ...childItem,
         statusLabel:
           columns.find((column) => column.id === childItem.status)?.name || "Unknown",
@@ -228,8 +228,7 @@ const TaskDetails: React.FC = () => {
 
     try {
       setIsSaving(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-task/${workflowId}/${taskId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-task/${workflowId}/${taskId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -252,6 +251,7 @@ const TaskDetails: React.FC = () => {
 
       await loadTaskDetails();
       setIsEditModalOpen(false);
+
     } catch (error) {
       console.error("Task update failed", error);
       alert(error instanceof Error ? error.message : "Could not update task");
@@ -265,8 +265,7 @@ const TaskDetails: React.FC = () => {
       return;
     }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_ORIGIN}/api/comment/task/${workflowId}/${taskId}`,
+    const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/comment/task/${workflowId}/${taskId}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -284,8 +283,7 @@ const TaskDetails: React.FC = () => {
   };
 
   const handleUpdateComment = async (commentId: string, text: string) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_ORIGIN}/api/comment/${commentId}`,
+    const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/comment/${commentId}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -358,6 +356,7 @@ const TaskDetails: React.FC = () => {
 
       await loadTaskDetails();
       setIsStoryModalOpen(false);
+
     } catch (error) {
       console.error("Story assignment failed", error);
       alert(error instanceof Error ? error.message : "Could not update story assignment");
@@ -390,9 +389,7 @@ const TaskDetails: React.FC = () => {
         <div className={styles.headerSide}>
           <div className={styles.headerBadges}>
             {currentStory && task.type !== "STORY" && (
-              <button
-                type="button"
-                className={styles.storyLinkTag}
+              <button type="button" className={styles.storyLinkTag}
                 onClick={openStoryPage}
               >
                 Belongs to Story "{currentStory.title}"
@@ -402,8 +399,7 @@ const TaskDetails: React.FC = () => {
           {!isReadOnly && (
             <div className={styles.headerActionRow}>
               {task.type !== "STORY" && (
-                <button
-                  type="button"
+                <button type="button"
                   className={styles.assignStoryButton}
                   onClick={() => setIsStoryModalOpen(true)}
                   title="Assign this item to a story"
@@ -484,11 +480,11 @@ const TaskDetails: React.FC = () => {
                     )
                   }
                 >
-                  <strong className={styles.storyChildTitle}>{childItem.title}</strong>
-                  <div className={styles.storyChildMeta}>
-                    <span className={styles.storyChildType}>{childItem.type}</span>
-                    <span className={styles.storyChildStatus}>{childItem.statusLabel}</span>
-                  </div>
+              <strong className={styles.storyChildTitle}>{childItem.title}</strong>
+              <div className={styles.storyChildMeta}>
+                <span className={styles.storyChildType}>{childItem.type}</span>
+                <span className={styles.storyChildStatus}>{childItem.statusLabel}</span>
+              </div>
                 </button>
               ))}
             </div>
@@ -594,10 +590,10 @@ const TaskDetails: React.FC = () => {
                       )
                     }
                   >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="CRITICAL">Critical</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
                   </select>
                 </label>
               </div>

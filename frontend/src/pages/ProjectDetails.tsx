@@ -53,9 +53,11 @@ const ProjectDetails: React.FC = () => {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [projectNameInput, setProjectNameInput] = useState("");
+
   const [projectDescriptionInput, setProjectDescriptionInput] = useState("");
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
   const [isArchiving, setIsArchiving] = useState(false);
   const [isAddingWorkflow, setIsAddingWorkflow] = useState(false);
   const [deletingWorkflowId, setDeletingWorkflowId] = useState<string | null>(null);
@@ -85,9 +87,7 @@ const ProjectDetails: React.FC = () => {
   };
 
   const loadProjectData = useCallback(async () => {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     try {
       const projectResponse = await fetch(
@@ -112,6 +112,7 @@ const ProjectDetails: React.FC = () => {
       setProjectNameInput(project.name);
       setProjectDescriptionInput(project.description || "");
       setIsArchived(project.isArchived);
+
       setCreatedAt(project.createdAt ?? null);
       setUpdatedAt(project.updatedAt ?? null);
       setViewerRole(data.viewerRole || "PROJECT_VIEWER");
@@ -147,8 +148,7 @@ const ProjectDetails: React.FC = () => {
       setIsSaving(true);
       setSaveError("");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update/${id}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update/${id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -196,8 +196,7 @@ const ProjectDetails: React.FC = () => {
 
     try {
       setIsArchiving(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/archive/${id}`,
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/archive/${id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -223,8 +222,7 @@ const ProjectDetails: React.FC = () => {
 
   const handleUpdateRole = async (email: string, newRole: string) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/change-member-role`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/change-member-role`,
         {
           method: "PATCH",
           headers: {
@@ -270,6 +268,7 @@ const ProjectDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to add workflow:", error);
+
     } finally {
       setIsAddingWorkflow(false);
     }
@@ -315,8 +314,7 @@ const ProjectDetails: React.FC = () => {
   const handleAddMember = async (email: string) => {
     try {
       setIsAddingMember(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-member`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -349,8 +347,7 @@ const ProjectDetails: React.FC = () => {
 
   const handleRemoveMember = async (email: string) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-member`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-member`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -454,9 +451,9 @@ const ProjectDetails: React.FC = () => {
           <WorkflowSection
             userRole={effectiveRole}
             boards={boards}
-            onAdd={handleAddWorkflow}
             onDelete={handleDeleteWorkflow}
             isAdding={isAddingWorkflow}
+            onAdd={handleAddWorkflow}
             deletingWorkflowId={deletingWorkflowId}
           />
         </section>
@@ -465,10 +462,10 @@ const ProjectDetails: React.FC = () => {
           <TeamSection
             members={members}
             userRole={effectiveRole}
+            isAddingMember={isAddingMember}
             onAddMember={handleAddMember}
             onUpdateRole={handleUpdateRole}
             onRemoveMember={handleRemoveMember}
-            isAddingMember={isAddingMember}
           />
         </aside>
       </div>
