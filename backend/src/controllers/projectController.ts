@@ -68,9 +68,23 @@ export const getProjects = async ( req : Request  , res : Response) => {
                         userId: user.id
                     }
                 }
-            }
+            },
+            include: {
+                members: {
+                    where: {
+                        userId: user.id,
+                    },
+                    select: {
+                        role: true,
+                    },
+                },
+            },
         })
-        res.status(200).json({ message: "Projects fetched successfully", projects });
+        const serializedProjects = projects.map(({ members, ...project }) => ({
+            ...project,
+            role: members[0]?.role ?? "PROJECT_VIEWER",
+        }));
+        res.status(200).json({ message: "Projects fetched successfully", projects: serializedProjects });
     }catch (error) {
         res.status(500).json({ message: "Internal Server Error", error });
     }
