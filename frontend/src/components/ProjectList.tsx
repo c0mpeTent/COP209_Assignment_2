@@ -14,10 +14,10 @@ interface ProjectListProps {
   items: Project[];
   title: string;
   emptyMessage: string;
-  onDelete: (id: string) => void;
   onArchiveToggle: (id: string, isArchived: boolean) => void;
   pendingDeleteId?: string | null;
   pendingArchiveId?: string | null;
+  onDelete: (id: string) => void;
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({
@@ -127,8 +127,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                         )
                       }
                     >
-                      {isArchiving
-                        ? project.isArchived
+                      {isArchiving ? project.isArchived
                           ? "Restoring..."
                           : "Archiving..."
                         : project.isArchived

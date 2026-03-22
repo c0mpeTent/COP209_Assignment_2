@@ -74,6 +74,7 @@ const WorkflowBoard: React.FC = () => {
     (feedback: MoveFeedback, durationMs = 2000) => {
       clearFeedbackTimeout();
       setMoveFeedback(feedback);
+
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setMoveFeedback(null);
         feedbackTimeoutRef.current = null;
@@ -88,10 +89,8 @@ const WorkflowBoard: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-workflow/${projectId}/${workflowId}`,
-        { credentials: "include" }
-      );
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/get-workflow/${projectId}/${workflowId}`,
+        { credentials: "include" });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -123,13 +122,11 @@ const WorkflowBoard: React.FC = () => {
       setTasks(data.tasks);
 
       const sortedColumns = data.columns.slice().sort((a, b) => a.order - b.order);
-      setInvalidFromColumnId((current) =>
-        sortedColumns.some((column) => column.id === current)
+      setInvalidFromColumnId((current) => sortedColumns.some((column) => column.id === current)
           ? current
           : sortedColumns[0]?.id || ""
       );
-      setInvalidToColumnId((current) =>
-        sortedColumns.some((column) => column.id === current)
+      setInvalidToColumnId((current) => sortedColumns.some((column) => column.id === current)
           ? current
           : sortedColumns[1]?.id || sortedColumns[0]?.id || ""
       );
@@ -152,8 +149,7 @@ const WorkflowBoard: React.FC = () => {
   );
 
   const stories = useMemo(
-    () =>
-      tasks
+    () => tasks
         .filter((task) => task.type === "STORY")
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
     [tasks]
@@ -183,8 +179,7 @@ const WorkflowBoard: React.FC = () => {
   const defaultStoryStatusId = orderedColumns[0]?.id ?? "";
 
   const effectiveResolvedColumn = useMemo(() => {
-    const configuredColumn =
-      resolvedColumnId
+    const configuredColumn = resolvedColumnId
         ? orderedColumns.find((column) => column.id === resolvedColumnId) ?? null
         : null;
 
@@ -199,9 +194,9 @@ const WorkflowBoard: React.FC = () => {
     );
   }, [orderedColumns, resolvedColumnId]);
 
+
   const getColumnTitle = useCallback(
-    (columnId: string) =>
-      orderedColumns.find((column) => column.id === columnId)?.title ?? "Unknown",
+    (columnId: string) => orderedColumns.find((column) => column.id === columnId)?.title ?? "Unknown",
     [orderedColumns]
   );
 
@@ -214,6 +209,8 @@ const WorkflowBoard: React.FC = () => {
       })),
     [getColumnTitle, invalidTransitions]
   );
+
+
 
   const storyCards = useMemo(
     () =>
@@ -241,10 +238,8 @@ const WorkflowBoard: React.FC = () => {
     try {
       setIsSavingWorkflowName(true);
       setBoardActionLabel("Saving workflow...");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-workflow/${boardId}`,
-        {
-          method: "PATCH",
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/update-workflow/${boardId}`,
+        { method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ name: workflowNameInput }),
@@ -275,10 +270,8 @@ const WorkflowBoard: React.FC = () => {
           ? "Enabling left-to-right rules..."
           : "Allowing any-direction transitions..."
       );
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/transition-rules/${boardId}`,
-        {
-          method: "PATCH",
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/transition-rules/${boardId}`,
+        { method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ leftToRightOnly: nextLeftToRightOnly }),
@@ -313,10 +306,7 @@ const WorkflowBoard: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            fromColumnId: invalidFromColumnId,
-            toColumnId: invalidToColumnId,
-          }),
+          body: JSON.stringify({ fromColumnId: invalidFromColumnId, toColumnId: invalidToColumnId, }),
         }
       );
 
@@ -469,8 +459,7 @@ const WorkflowBoard: React.FC = () => {
   const handleCreateTask = async (columnId: string, payload: CreateTaskPayload) => {
     try {
       setBoardActionLabel(payload.type === "STORY" ? "Creating story..." : "Creating task...");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-task`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/add-task`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -528,8 +517,7 @@ const WorkflowBoard: React.FC = () => {
   const deleteTaskById = async (taskId: string) => {
     try {
       setBoardActionLabel("Deleting item...");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-task/${boardId}/${taskId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-task/${boardId}/${taskId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -596,7 +584,7 @@ const WorkflowBoard: React.FC = () => {
 
   const handleUpdateColumn = async (
     columnId: string,
-    payload: ColumnUpdatePayload
+    payload:ColumnUpdatePayload
   ) => {
     try {
       setBoardActionLabel("Updating column...");
@@ -631,7 +619,7 @@ const WorkflowBoard: React.FC = () => {
 
   const handleReorderColumn = async (
     columnId: string,
-    direction: "left" | "right"
+    direction: "left" |"right"
   ) => {
     const currentIndex = orderedColumns.findIndex((column) => column.id === columnId);
     if (currentIndex === -1) {
@@ -639,7 +627,7 @@ const WorkflowBoard: React.FC = () => {
     }
 
     const targetIndex =
-      direction === "left" ? currentIndex - 1 : currentIndex + 1;
+      direction === "left"? currentIndex - 1 : currentIndex + 1;
 
     if (targetIndex < 0 || targetIndex >= orderedColumns.length) {
       return;
@@ -651,8 +639,7 @@ const WorkflowBoard: React.FC = () => {
 
     try {
       setBoardActionLabel("Reordering columns...");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/reorder-columns/${boardId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/reorder-columns/${boardId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -684,8 +671,7 @@ const WorkflowBoard: React.FC = () => {
 
     try {
       setBoardActionLabel("Deleting column...");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-column/${boardId}/${columnId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete-column/${boardId}/${columnId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -698,9 +684,11 @@ const WorkflowBoard: React.FC = () => {
       }
 
       await fetchBoardData();
+
     } catch (error) {
       console.error("Column deletion failed", error);
       alert(error instanceof Error ? error.message : "Could not delete column");
+
     } finally {
       setBoardActionLabel(null);
     }
@@ -737,7 +725,7 @@ const WorkflowBoard: React.FC = () => {
     event.stopPropagation();
 
     const confirmed = window.confirm(
-      "Do you want to delete the story? All the tasks and bugs inside it will get deleted with the story."
+      "Do you want to delete the story ? All the tasks and bugs inside it will get deleted with the story."
     );
     if (!confirmed) {
       return;
@@ -1099,10 +1087,10 @@ const WorkflowBoard: React.FC = () => {
             onMoveTask={handleMoveTask}
             onUpdateTask={handleEditTask}
             onCreateTask={handleCreateTask}
-            onDeleteTask={(taskId) => handleDeleteTask(taskId)}
             onRenameColumn={handleRenameColumn}
             onUpdateColumn={handleUpdateColumn}
             onReorderColumn={handleReorderColumn}
+            onDeleteTask={(taskId) => handleDeleteTask(taskId)}
             onDeleteColumn={handleDeleteColumn}
           />
         ))}
@@ -1110,12 +1098,12 @@ const WorkflowBoard: React.FC = () => {
 
       {isStoryModalOpen && (
         <CreateTaskModal
-          columnId={defaultStoryStatusId}
-          boardId={boardId}
-          members={boardMembers}
           title="Create Story"
           allowedTypes={["STORY"]}
           defaultType="STORY"
+          columnId={defaultStoryStatusId}
+          boardId={boardId}
+          members={boardMembers}
           onClose={() => setIsStoryModalOpen(false)}
           onAdd={async (payload) => {
             await handleCreateTask(defaultStoryStatusId, {

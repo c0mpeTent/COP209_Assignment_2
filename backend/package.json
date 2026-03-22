@@ -6,7 +6,9 @@
   "scripts": {
     "test": "NODE_ENV=test node --loader ts-node/esm --test src/tests/*.test.ts",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'node --loader ts-node/esm' src/main.ts",
-    "build": "tsc"
+    "prisma:generate": "prisma generate",
+    "build": "npm run prisma:generate && tsc -p tsconfig.json",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

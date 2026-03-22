@@ -13,20 +13,20 @@ const AuthForm: React.FC = () => {
     e.preventDefault();
     const mode = isLogin ? "login" : "singup";
     console.log("summited " + email + " " + password + " in mode : " + mode);
-    // 1. Determine the correct endpoint
+    // 1. determine the correct endpoint
     const backendUrl = import.meta.env.VITE_BACKEND_ORIGIN;
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     const payload = isLogin
       ? { email, password }
-      : { email, password, name }; // Matches your User model
+      : { email, password, name }; // matches your User model
 
     try {
-      // 2. Make the API Request
+      // 2. make the API Request
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include", // Include cookies for session management
+        credentials: "include", // include cookies for session management
       });
 
       const data = await response.json();
@@ -35,11 +35,10 @@ const AuthForm: React.FC = () => {
         throw new Error(data.message || "Something went wrong");
       }
       setIsLogin(true);
-      // 3. Success! Handle the response
+      //3. Success! handle the response
       console.log("Success:", data);
 
-      if (isLogin) {
-        // navigate("/dashboard");
+      if (isLogin) { // navigate(" /dashboard") 
         navigate("/dashboard");
         window.location.reload();
 
@@ -50,6 +49,7 @@ const AuthForm: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
+      alert(error instanceof Error ? error.message : "Authentication failed");
     }
   };
 
@@ -101,8 +101,7 @@ const AuthForm: React.FC = () => {
           onClick={() => {
             setIsLogin(!isLogin);
           }}
-        >
-          {isLogin ? "Sign Up" : "Login"}
+        > {isLogin ? "Sign Up" : "Login"}
         </button>
       </p>
     </div>

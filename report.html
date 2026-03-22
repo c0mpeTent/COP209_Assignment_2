@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SyncFlow Report</title>
+    <style>
+      body {
+        margin: 48px;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937;
+        line-height: 1.6;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: #111827;
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        border-bottom: 2px solid #4f46e5;
+        padding-bottom: 12px;
+      }
+
+      h2 {
+        margin-top: 28px;
+      }
+
+      h3 {
+        margin-top: 18px;
+      }
+
+      ul {
+        margin-top: 8px;
+      }
+
+      code {
+        background: #eef2ff;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+
+      .muted {
+        color: #4b5563;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SyncFlow Report</h1>
+
+    <h2>Team</h2>
+    <ul>
+      <li>Entry number 1: <code>__________</code></li>
+      <li>Entry number 2: <code>__________</code></li>
+      <li>
+        GitHub repository:
+        <a href="https://github.com/c0mpeTent/prototype-ass2-1">
+          https://github.com/c0mpeTent/prototype-ass2-1
+        </a>
+      </li>
+    </ul>
+
+    <h2>Project Overview</h2>
+    <p>
+      SyncFlow is a Jira-inspired task management platform developed for COP290
+      Assignment 2. It supports authentication, project and workflow
+      management, Kanban boards, stories/tasks/bugs, comments, activity
+      history, and persistent in-app notifications.
+    </p>
+
+    <h2>Design Decisions</h2>
+
+    <h3>1. Frontend and Backend Separation</h3>
+    <p>The project is split into two TypeScript codebases:</p>
+    <ul>
+      <li>a React + Vite frontend for the UI</li>
+      <li>an Express + Prisma backend for API handling and business rules</li>
+    </ul>
+    <p>
+      This separation keeps workflow rules, session handling, and database logic
+      on the backend while the frontend focuses on rendering and interaction.
+    </p>
+
+    <h3>2. Authentication and Session Renewal</h3>
+    <p>Authentication uses cookie-based JWT sessions with:</p>
+    <ul>
+      <li>short-lived access tokens</li>
+      <li>long-lived refresh tokens</li>
+      <li>refresh-token invalidation on logout</li>
+    </ul>
+    <p>
+      This was chosen because the assignment requires login persistence plus
+      session renewal. Storing refresh tokens in the database also makes logout
+      invalidation real instead of being only browser-side.
+    </p>
+
+    <h3>3. Database and Schema Choice</h3>
+    <p>MongoDB with Prisma was used because:</p>
+    <ul>
+      <li>Prisma keeps models typed and consistent across the backend</li>
+      <li>MongoDB works well for nested workflow/task/comment data</li>
+      <li>the starting project base already fit this direction</li>
+    </ul>
+    <p>The schema models:</p>
+    <ul>
+      <li>users and project memberships</li>
+      <li>boards and workflow columns</li>
+      <li>stories, tasks, and bugs</li>
+      <li>comments and notifications</li>
+      <li>audit history and lifecycle timestamps</li>
+    </ul>
+
+    <h3>4. Workflow Rules</h3>
+    <p>Workflow rules are enforced on the backend so invalid frontend actions cannot bypass them. The implementation supports:</p>
+    <ul>
+      <li>board-level WIP limits</li>
+      <li>configurable transition rules</li>
+      <li>optional left-to-right-only mode</li>
+      <li>custom invalid status transitions</li>
+    </ul>
+    <p>
+      This design is better than frontend-only checks because the backend stays
+      the source of truth for every move.
+    </p>
+
+    <h3>5. Resolved and Closed Timestamp Logic</h3>
+    <p>
+      Lifecycle timestamps were kept automatic instead of editable per task.
+      This was a deliberate decision because manual editing would make audit
+      data less trustworthy.
+    </p>
+    <p>Current behavior:</p>
+    <ul>
+      <li><code>resolvedAt</code> is set when an item reaches the configured resolved column for that workflow</li>
+      <li>default resolved column is <code>Done</code></li>
+      <li>if <code>Done</code> does not exist, the last column is used</li>
+      <li>if admins configure a different resolved column, that configured column takes priority</li>
+      <li><code>closedAt</code> is set only when an item reaches the final column</li>
+    </ul>
+    <p>
+      This gives flexibility without turning lifecycle timestamps into
+      user-entered values.
+    </p>
+
+    <h3>6. Story Hierarchy</h3>
+    <p>Stories are kept separate from the main Kanban card flow.</p>
+    <p>The chosen structure is:</p>
+    <ul>
+      <li>a story list strip above the board</li>
+      <li>all tasks and bugs remain in the main Kanban columns, whether they belong to a story or not</li>
+      <li>clicking a story opens its task-details page</li>
+      <li>story details page shows child tasks/bugs in a separate grid</li>
+    </ul>
+    <p>
+      This design follows the updated requirement that stories should not occupy
+      normal Kanban card space.
+    </p>
+
+    <h3>7. Task Details and Collaboration</h3>
+    <p>
+      Task collaboration uses a dedicated task-details page instead of an
+      overlay. This was chosen because comments, activity history, metadata,
+      and story linkage become too crowded inside a modal.
+    </p>
+    <p>The task page supports:</p>
+    <ul>
+      <li>metadata and edit actions</li>
+      <li>comments with minimal markdown-style formatting</li>
+      <li>mentions using <code>@username</code></li>
+      <li>activity timeline</li>
+      <li>story assignment and reassignment for tasks and bugs</li>
+    </ul>
+
+    <h3>8. Notifications</h3>
+    <p>
+      Notifications are persistent and stored in the database. Polling was used
+      instead of WebSockets because the assignment explicitly allows it and it
+      keeps the implementation simpler and more reliable.
+    </p>
+    <p>Implemented notification triggers include:</p>
+    <ul>
+      <li>task assignment</li>
+      <li>task status change</li>
+      <li>comment added</li>
+      <li>user mentioned in comment</li>
+      <li>task/story/bug creation</li>
+      <li>task assigned to story</li>
+      <li>task/story deletion</li>
+    </ul>
+    <p>
+      Notifications are shown in one notification-center page with unread and
+      history sections.
+    </p>
+
+    <h3>9. UX Decisions</h3>
+    <p>
+      The UI follows a consistent dark-theme visual language across dashboard,
+      project details, workflow board, task details, and notifications.
+    </p>
+    <p>Some small but important UX decisions were:</p>
+    <ul>
+      <li>inline loading states for actions such as saving, deleting, and creating</li>
+      <li>disabled controls during pending actions</li>
+      <li>partially optimistic drag-and-drop for task movement</li>
+      <li>inline board feedback for move success/failure</li>
+      <li>sidebar notification badge</li>
+    </ul>
+    <p>For drag-and-drop specifically, a controlled optimistic approach was used:</p>
+    <ul>
+      <li>the task moves immediately in the UI</li>
+      <li>the backend still validates the move</li>
+      <li>the board is temporarily locked during the request</li>
+      <li>on failure, the task rolls back and an inline error is shown</li>
+    </ul>
+    <p>
+      This gives a faster board experience without allowing conflicting
+      parallel move actions.
+    </p>
+
+    <h2>Challenges and Tradeoffs</h2>
+
+    <h3>Keeping Backend as Source of Truth</h3>
+    <p>
+      The project has many rule-heavy behaviors: transition validation, WIP
+      enforcement, story status derivation, audit logging, and notifications.
+      Because of that, the backend had to remain authoritative even when the
+      frontend was made more responsive.
+    </p>
+
+    <h3>Minimal Rich Text Instead of Full Editor</h3>
+    <p>
+      A markdown-style comment system was chosen over a full rich-text editor.
+      This keeps the implementation small enough for the assignment while still
+      satisfying the formatted-comment requirement in a defendable way.
+    </p>
+
+    <h3>Story Representation</h3>
+    <p>
+      An earlier story-focused board view was replaced with the current
+      story-strip design. The final approach is simpler, closer to the updated
+      requirement, and avoids mixing parent stories with regular work-item
+      cards.
+    </p>
+
+    <h2>Testing and Quality</h2>
+    <p>The backend includes unit tests for:</p>
+    <ul>
+      <li>auth utilities</li>
+      <li>project role and permission helpers</li>
+      <li>board ordering and resolved-column selection</li>
+      <li>task due-date and lifecycle timestamp rules</li>
+      <li>workflow transition and WIP logic</li>
+      <li>story-status derivation</li>
+    </ul>
+    <p>Both frontend and backend build cleanly, and the backend tests pass.</p>
+
+    <h2>Future Improvements</h2>
+    <ul>
+      <li>replace browser alerts/confirms with themed dialogs</li>
+      <li>add more controller or route-level backend tests</li>
+      <li>add richer comment formatting if the project scope increases</li>
+      <li>refine optimistic updates for more actions beyond drag-and-drop</li>
+    </ul>
+
+    <h2>Conclusion</h2>
+    <p>
+      SyncFlow fulfills the assignment goals by combining typed full-stack
+      development, workflow-rule enforcement, story hierarchy, collaboration
+      tools, and persistent notifications in a single Jira-inspired system.
+    </p>
+    <p class="muted">
+      Fill in the team entry numbers before final submission.
+    </p>
+  </body>
+</html>

@@ -8,10 +8,11 @@ interface TaskCardProps {
   task: Task;
   columnId: string;
   currentUserId: string;
-  storyTitle?: string;
   onDelete: () => Promise<void>;
   userRole?: string;
   isBoardBusy?: boolean;
+  storyTitle?: string;
+ 
 }
 
 const getResolvedAvatarUrl = (avatarUrl?: string) => {
@@ -76,7 +77,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
     if (!projectId || !workflowId) {
       return;
     }
-
     navigate(`/project/${projectId}/workflow/${workflowId}/task/${task.id}`);
   };
 
@@ -91,9 +91,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    if (!canModify) {
-      return;
-    }
+    if (!canModify) { return;
+ }
 
     e.dataTransfer.setData("taskId", task.id);
     e.dataTransfer.setData("sourceColId", columnId);

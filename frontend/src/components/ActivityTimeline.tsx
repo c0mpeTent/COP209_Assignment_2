@@ -26,8 +26,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ entries }) => {
               <div className={styles.eventBody}>
                 <div className={styles.eventHeader}>
                   <strong className={styles.eventActor}>{entry.actorName}</strong>
-                  <span className={styles.eventTime}>
-                    {new Date(entry.createdAt).toLocaleString()}
+                  <span className={styles.eventTime}> {new Date(entry.createdAt).toLocaleString()}
                   </span>
                 </div>
                 <p className={styles.eventMessage}>{entry.message}</p>

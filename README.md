@@ -1,66 +1,199 @@
-# COP290 Assignment 2 - Project Management System
+# SyncFlow
 
-A full-stack project management application with Kanban board functionality, user authentication, and real-time collaboration features.
+SyncFlow is a Jira-inspired project management application built for COP290 Assignment 2. It supports authentication, project and workflow management, Kanban boards, stories/tasks/bugs, comments, activity history, and persistent in-app notifications.
 
-## 🏗️ Project Architecture
+## Tech Stack
 
-This is a **MERN stack** application with TypeScript:
-- **Frontend**: React + TypeScript + Vite
-- **Backend**: Node.js + Express + TypeScript
-- **Database**: MongoDB with Prisma ORM
-- **Authentication**: JWT with refresh tokens
+- Frontend: React, TypeScript, Vite, React Router, CSS Modules
+- Backend: Express, TypeScript
+- Database: MongoDB with Prisma ORM
+- Auth: JWT access and refresh tokens stored in HTTP-only cookies
 
-## 📋 Features
+## Repository Structure
 
-### Core Functionality
-- **User Management**: Registration, login, profile management with avatar uploads
-- **Project Management**: Create, manage, and archive projects
-- **Kanban Boards**: Visual task management with customizable columns
-- **Task Management**: Create, assign, and track tasks with different types (Story, Task, Bug)
-- **Comments & Notifications**: Real-time collaboration with commenting system
-- **Role-Based Access**: Multiple user roles (Global Admin, Project Admin, Member, Viewer)
+```text
+assignment_2/
+  backend/
+  frontend/
+  README.md
+  report.md
+  report.pdf
+```
 
-### Advanced Features
-- **Task Hierarchy**: Parent-child relationships between stories and subtasks
-- **Audit Trail**: Complete history tracking for task changes
-- **WIP Limits**: Work-in-progress limits for columns
-- **Custom Workflows**: Configurable column transitions
-- **File Uploads**: Avatar image uploads with size limits
+## Features
 
-## 🚀 Quick Start
+- Email/password authentication with hashed passwords
+- Refresh-token based sessions using HTTP-only cookies
+- User profile management with avatar upload
+- Project creation, editing, archiving, and member role management
+- Multiple Kanban boards per project with configurable columns and WIP limits
+- Configurable workflow rules including left-to-right mode, resolved-column selection, and explicit invalid transitions
+- Story, task, and bug hierarchy with derived story status
+- Drag-and-drop task movement with backend validation
+- Task comments with safe markdown-style formatting and mentions
+- Activity timeline and audit history
+- Persistent notifications with read/unread tracking and history clearing
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (local or cloud instance)
-- npm or yarn
+## Environment Variables
 
+Create a `.env` file inside `/backend`:
 
-### Installation
+```env
+PORT=3000
+DATABASE_URL=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+FRONTEND_ORIGIN=http://localhost:5173
+BACKEND_ORIGIN=http://localhost:3000
+```
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/c0mpeTent/COP290_Assignment_2.git
-   cd COP290_Assignment_2
+Create a `.env` file inside `/frontend`:
 
-2. Install dependencies
-   ```bash
-   cd backend
-   npm install
-   cd ../frontend
-   npm install
+```env
+VITE_BACKEND_ORIGIN=http://localhost:3000
+```
 
-3. Run the application
-   ```bash
-   cd backend
-   npm run dev
-   cd ../frontend
-   npm run dev
+## Installation
 
-4. backend test
-   ```bash
-   cd backend
-   npm test
-   ```
+### Backend
 
-## Connection to database using mongodb compass
-connection url = mongodb+srv://ta_grader:123456_ta@cluster0.q3nk8vh.mongodb.net/
+```bash
+cd backend
+npm install
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+```
+
+## Running the Project
+
+Open two terminals.
+
+### Terminal 1: backend
+
+```bash
+cd backend
+npm run dev
+```
+
+### Terminal 2: frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in the browser.
+
+## Scripts
+
+### Backend
+
+```bash
+npm run dev
+npm run build
+npm run prisma:generate
+```
+
+### Frontend
+
+```bash
+npm run dev
+npm run build
+npm run lint
+```
+
+## API Summary
+
+### Authentication
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/refresh`
+- `GET /api/auth/me`
+
+### Profile
+
+- `PATCH /api/profile/update`
+- `POST /api/profile/update-avatar`
+- `DELETE /api/profile/delete-avatar`
+
+### Projects
+
+- `POST /api/project/create`
+- `GET /api/project/get`
+- `GET /api/project/get-project/:projectId`
+- `PATCH /api/project/update/:projectId`
+- `PATCH /api/project/archive/:projectId`
+- `DELETE /api/project/delete/:projectId`
+
+### Members
+
+- `POST /api/project/add-member`
+- `PATCH /api/project/change-member-role`
+- `DELETE /api/project/delete-member`
+
+### Workflows and Tasks
+
+- `POST /api/project/add-workflow`
+- `GET /api/project/get-workflow/:projectId/:workflowId`
+- `PATCH /api/project/update-workflow/:workflowId`
+- `DELETE /api/project/delete-workflow/:workflowId`
+- `PATCH /api/project/transition-rules/:workflowId`
+- `PATCH /api/project/resolved-column/:workflowId`
+- `POST /api/project/invalid-transition/:workflowId`
+- `DELETE /api/project/invalid-transition/:workflowId/:transitionId`
+- `POST /api/project/add-task`
+- `GET /api/project/task/:workflowId/:taskId`
+- `PATCH /api/project/update-task/:workflowId/:taskId`
+- `DELETE /api/project/delete-task/:workflowId/:taskId`
+
+### Columns
+
+- `POST /api/project/add-column/:workflowId`
+- `PATCH /api/project/update-column/:workflowId/:columnId`
+- `PATCH /api/project/reorder-columns/:workflowId`
+- `DELETE /api/project/delete-column/:workflowId/:columnId`
+
+### Comments
+
+- `GET /api/comment/task/:workflowId/:taskId`
+- `POST /api/comment/task/:workflowId/:taskId`
+- `PATCH /api/comment/:commentId`
+- `DELETE /api/comment/:commentId`
+
+### Notifications
+
+- `GET /api/notification`
+- `PATCH /api/notification/:notificationId/read`
+- `PATCH /api/notification/read-all`
+- `DELETE /api/notification/clear-history`
+
+## Testing
+
+Verified locally:
+
+- backend build via `npm run build`
+- frontend production build via `npm run build`
+- frontend lint via `npm run lint`
+
+The backend also includes TypeScript test files in `backend/src/tests` covering:
+
+- authentication utilities
+- project role and permission helpers
+- board ordering and Done-column resolution
+- task due-date and lifecycle timestamp rules
+- workflow transition, WIP, and story-status rules
+
+At the moment, these backend tests are not wired to a working `npm test` script in `backend/package.json`, so the README does not claim a passing automated backend test command.
+
+## Submission Notes
+
+- Source code is written in TypeScript for both frontend and backend.
+- Prisma client generation is part of the backend install/build flow.
+- Backend test sources are included for the main rule-heavy logic, even though the test runner setup is still incomplete.
+- The design report is available in [report.md](./report.md) and [report.pdf](./report.pdf).

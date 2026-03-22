@@ -65,6 +65,7 @@ const Dashboard: React.FC = () => {
         alert(`Error: ${data.message || "Could not create project"}`);
       }
     } catch (error) {
+
       console.error("Network/App Error:", error);
     } finally {
       setIsCreatingProject(false);
@@ -74,8 +75,7 @@ const Dashboard: React.FC = () => {
   const handleDeleteProject = async (projectId: string) => {
     try {
       setPendingDeleteProjectId(projectId);
-      const deleteResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete/${projectId}`,
+      const deleteResponse = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/delete/${projectId}`,
         {
           method: "DELETE",
           headers: {
@@ -104,8 +104,7 @@ const Dashboard: React.FC = () => {
   const handleArchiveToggle = async (projectId: string, isArchived: boolean) => {
     try {
       setPendingArchiveProjectId(projectId);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/archive/${projectId}`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/project/archive/${projectId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -121,14 +120,14 @@ const Dashboard: React.FC = () => {
       }
 
       setProjects((currentProjects) =>
-        currentProjects.map((project) =>
-          project.id === projectId
+        currentProjects.map((project) => project.id === projectId
             ? { ...project, isArchived: data.project.isArchived }
             : project
         )
       );
     } catch (error) {
       console.error("Project archive error:", error);
+
     } finally {
       setPendingArchiveProjectId((current) => (current === projectId ? null : current));
     }
@@ -143,6 +142,7 @@ const Dashboard: React.FC = () => {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
           }),
+          
           fetch(import.meta.env.VITE_BACKEND_ORIGIN + "/api/project/get", {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -215,10 +215,10 @@ const Dashboard: React.FC = () => {
               ? "No archived projects right now."
               : "No active projects yet. Start by creating your first one."
           }
-          onDelete={handleDeleteProject}
-          onArchiveToggle={handleArchiveToggle}
           pendingDeleteId={pendingDeleteProjectId}
           pendingArchiveId={pendingArchiveProjectId}
+          onDelete={handleDeleteProject}
+          onArchiveToggle={handleArchiveToggle}
         />
       </div>
     </div>

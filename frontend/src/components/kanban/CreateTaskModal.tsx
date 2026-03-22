@@ -16,9 +16,10 @@ interface CreateTaskModalProps {
   title?: string;
   allowedTypes?: TaskType[];
   defaultType?: TaskType;
-  fixedParentStoryId?: string | null;
   onClose: () => void;
   onAdd: (payload: CreateTaskPayload) => Promise<void> | void;
+  fixedParentStoryId?: string | null;
+ 
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -34,12 +35,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   onAdd,
 }) => {
   const [taskTitle, setTaskTitle] = useState("");
+
   const [description, setDescription] = useState("");
   const [type, setType] = useState<TaskType>(defaultType);
+
   const [priority, setPriority] = useState<PriorityType>("MEDIUM");
   const [dueDate, setDueDate] = useState("");
   const [assignee, setAssignee] = useState("");
   const [parentStoryId, setParentStoryId] = useState(fixedParentStoryId ?? "");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,11 +60,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       type,
       priority,
       status: columnId,
-      dueDate: dueDate || null,
       parentStoryId:
         type === "STORY"
           ? null
           : fixedParentStoryId ?? (parentStoryId ? parentStoryId : null),
+      dueDate: dueDate || null,
       assignee: assignee || undefined,
     };
 

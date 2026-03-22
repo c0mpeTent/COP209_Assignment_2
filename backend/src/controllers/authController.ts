@@ -122,22 +122,18 @@ const rotateRefreshSession = async (req: Request, res: Response) => {
     return null;
   }
 
-  const nextRefreshToken = randomBytes(48).toString("hex");
   const nextAccessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: "15m" });
 
-  await prisma.refreshToken.delete({
+  // Keep the same refresh token during refresh so concurrent requests
+  // do not invalidate each other's session recovery path.
+  await prisma.refreshToken.update({
     where: { id: storedToken.id },
-  });
-
-  await prisma.refreshToken.create({
     data: {
-      userId: user.id,
-      tokenHash: hashRefreshToken(nextRefreshToken),
       expiresAt: new Date(Date.now() + 7*24*60*60*1000),
     },
   });
 
-  setAuthCookies(res, nextAccessToken, nextRefreshToken);
+  setAuthCookies(res, nextAccessToken, refreshToken);
   return user;
 };
 
@@ -287,4 +283,3 @@ export const addAuthenticateUser = async (req :Request, res :Response,next :Func
     res.status(500).json({ message: "User authentication failed", error });
   }
 };
-

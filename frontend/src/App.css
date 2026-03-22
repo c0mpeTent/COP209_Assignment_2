@@ -19,11 +19,9 @@
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+  from { transform: rotate(0deg);
   }
-  to {
-    transform: rotate(360deg);
+  to { transform: rotate(360deg);
   }
 }
 
@@ -41,7 +39,6 @@
   color: #888;
 }
 
-/* src/App.css */
 :root {
   --bg-dark: #121212;
   --text-main: #e0e0e0;

@@ -8,7 +8,6 @@ interface HeaderProps {
 }
 
 const ColumnHeader: React.FC<HeaderProps> = ({ title, currentCount, limit }) => {
-  // 5. Visual feedback: turn ratio red if limit is reached
   const isAtLimit = currentCount >= limit;
 
   return (

@@ -125,15 +125,12 @@
 .critical {
   background-color: #ff4d4d;
 }
-
 .high {
   background-color: #ffa500;
 }
-
 .medium {
   background-color: #52a0ff;
 }
-
 .low {
   background-color: #28a745;
 }

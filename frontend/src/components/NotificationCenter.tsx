@@ -42,8 +42,7 @@ const NotificationCenter: React.FC = () => {
 
   const loadNotifications = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification`,
         {
           credentials: "include",
         }
@@ -74,8 +73,7 @@ const NotificationCenter: React.FC = () => {
   }, [loadNotifications]);
 
   const groupedNotifications = useMemo(
-    () => ({
-      unread: notifications.filter((notification) => !notification.isRead),
+    () => ({ unread: notifications.filter((notification) => !notification.isRead),
       history: notifications,
     }),
     [notifications]
@@ -118,6 +116,7 @@ const NotificationCenter: React.FC = () => {
     } catch (error) {
       console.error("Could not open notification:", error);
       alert(error instanceof Error ? error.message : "Could not open notification");
+
     } finally {
       setPendingNotificationId(null);
     }
@@ -126,8 +125,7 @@ const NotificationCenter: React.FC = () => {
   const handleMarkAllAsRead = async () => {
     try {
       setIsMarkingAll(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification/read-all`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification/read-all`,
         {
           method: "PATCH",
           credentials: "include",
@@ -162,8 +160,7 @@ const NotificationCenter: React.FC = () => {
 
     try {
       setIsClearingHistory(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification/clear-history`,
+      const response = await fetch( `${import.meta.env.VITE_BACKEND_ORIGIN}/api/notification/clear-history`,
         {
           method: "DELETE",
           credentials: "include",
@@ -179,6 +176,7 @@ const NotificationCenter: React.FC = () => {
       setUnreadCount(0);
     } catch (error) {
       console.error("Could not clear notification history:", error);
+
       alert(
         error instanceof Error
           ? error.message
@@ -215,8 +213,7 @@ const NotificationCenter: React.FC = () => {
               className={styles.markAllBtn}
               onClick={() => void handleMarkAllAsRead()}
               disabled={isMarkingAll || unreadCount === 0}
-            >
-              {isMarkingAll ? "Marking..." : "Mark All As Read"}
+            > {isMarkingAll ? "Marking..." : "Mark All As Read"}
             </button>
           </div>
           <span className={styles.sectionCount}>{groupedNotifications.unread.length}</span>
@@ -256,8 +253,7 @@ const NotificationCenter: React.FC = () => {
               className={styles.clearHistoryBtn}
               onClick={() => void handleClearHistory()}
               disabled={isClearingHistory || groupedNotifications.history.length === 0}
-            >
-              {isClearingHistory ? "Clearing..." : "Clear History"}
+            > {isClearingHistory ? "Clearing..." : "Clear History"}
             </button>
           </div>
           <span className={styles.sectionCount}>{groupedNotifications.history.length}</span>
@@ -303,7 +299,7 @@ const NotificationCenter: React.FC = () => {
                     disabled={pendingNotificationId === notification.id}
                     onClick={() => void handleOpenNotification(notification)}
                   >
-                    {pendingNotificationId === notification.id ? "Opening..." : "Open"}
+                    {pendingNotificationId ===  notification.id ? "Opening..." : "Open"}
                   </button>
                 </div>
               </div>

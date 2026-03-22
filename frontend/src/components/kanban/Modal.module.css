@@ -29,6 +29,7 @@
   color: #fff;
 }
 
+
 .modalHeaderRow {
   display: flex;
   justify-content: space-between;
@@ -42,6 +43,7 @@
   font-size: 0.9rem;
 }
 
+
 .closeBtn {
   border: none;
   background: transparent;
@@ -53,7 +55,6 @@
 .closeBtn:hover {
   color: #fff;
 }
-
 .form {
   display: flex;
   flex-direction: column;
@@ -72,9 +73,7 @@
   color: #8f8f8f;
 }
 
-.field input,
-.field select,
-.field textarea {
+.field input, .field select, .field textarea {
   background: #121212;
   border: 1px solid #444;
   border-radius: 8px;
@@ -84,15 +83,11 @@
   outline: none;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
+.field input:focus, .field select:focus, .field textarea:focus {
   border-color: #bb86fc;
 }
 
-.field input:disabled,
-.field select:disabled,
-.field textarea:disabled {
+.field input:disabled, .field select:disabled, .field textarea:disabled {
   opacity: 0.8;
   cursor: not-allowed;
 }

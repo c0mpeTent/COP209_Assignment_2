@@ -12,9 +12,9 @@ interface EditTaskModalProps {
   columns: ColumnData[];
   members: BoardMemberOption[];
   isReadOnly: boolean;
-  lockStatus?: boolean;
   onClose: () => void;
   onUpdate: (payload: UpdateTaskPayload) => Promise<void>;
+  lockStatus?: boolean;
 }
 
 const formatDateForInput = (value?: string | null) => {
@@ -45,8 +45,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions = useMemo(
-    () => {
-      const orderedColumns = columns.slice().sort((a, b) => a.order - b.order);
+    () => { const orderedColumns = columns.slice().sort((a, b) => a.order - b.order);
 
       return orderedColumns
         .map((column) => ({
@@ -60,9 +59,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) { return; }
 
     const payload: UpdateTaskPayload = {
       taskId: task.id,
