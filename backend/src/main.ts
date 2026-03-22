@@ -96,7 +96,12 @@ app.use("/api/comment", addAuthenticateUser, commentRoutes);
 // notification: get, mark all read, mark specific read
 app.use("/api/notification", addAuthenticateUser, notificationRoutes);
 
-// 3. Start Listening
-app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+// 3. Start Listening (only if not in test mode)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
+}
+
+// Export app for testing
+export default app;

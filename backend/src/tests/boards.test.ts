@@ -1,66 +1,160 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  getColumnOrderUpdates,
-  type WorkflowColumnLike,
-} from "../lib/workflowUtils.js";
+import request from "supertest";
+import app from "../main.js";
+import { 
+  setupTestDb, 
+  cleanupTestData, 
+  createTestUser, 
+  createTestProject,
+  createTestBoard,
+  generateTestToken,
+  closeTestDb 
+} from "./testUtils.js";
 
-const getResolvedColumn = (
-  columns: WorkflowColumnLike[],
-  resolvedColumnId?: string | null
-) => {
-  const orderedColumns = columns.sort((a, b) => a.order - b.order);
-  const configuredColumn =
-    resolvedColumnId
-      ? orderedColumns.find((column) => column.id === resolvedColumnId) ?? null
-      : null;
-
-  if (configuredColumn) {
-    return configuredColumn;
-  }
-
-  return (
-    orderedColumns.find((column) => column.name.trim().toLowerCase() === "done") ??
-    orderedColumns[orderedColumns.length - 1] ??
-    null
-  );
-};
-
-
-const columns: WorkflowColumnLike[] = [
-  { id: "todo", name: "To Do", order: 0, wipLimit: 10 },
-  { id: "progress", name: "In Progress", order: 1, wipLimit: 10 },
-  { id: "review", name: "Review", order: 2, wipLimit: 10 },
-  { id: "done", name: "Done", order: 3, wipLimit: 10 },
-  { id: "deployed", name: "Deployed", order: 4, wipLimit: 10 },
-];
-
-test("column reorder updates preserve the new order indexes", () => {
-  assert.deepEqual(getColumnOrderUpdates(["review", "todo", "done"]), [
-    { id: "review", order: 0 },
-    { id: "todo", order: 1 },
-    { id: "done", order: 2 },
-  ]);
+test.before(async () => {
+  await setupTestDb();
 });
 
-test("resolved column prefers the explicit Done column over the last column", () => {
-  const resolvedColumn = getResolvedColumn(columns);
-  assert.equal(resolvedColumn?.id, "done");
+test.after(async () => {
+  await cleanupTestData();
+  await closeTestDb();
 });
 
-test("resolved column prefers the configured column over Done when provided", () => {
-  const resolvedColumn = getResolvedColumn(columns, "review");
-  assert.equal(resolvedColumn?.id, "review");
-});
+test.describe('Critical Board API Tests', () => {
+  let testUser: any;
+  let testProject: any;
+  let authToken: string;
 
-test("resolved column falls back to the last column when Done does not exist", () => {
-  const fallbackColumn = getResolvedColumn(
-    columns.filter((column) => column.id !== "done")
-  );
-  assert.equal(fallbackColumn?.id, "deployed");
-});
+  test.beforeEach(async () => {
+    testUser = await createTestUser({
+      email: 'board@example.com',
+      name: 'Board User',
+      password: 'password123'
+    });
+    testProject = await createTestProject(testUser.id);
+    authToken = await generateTestToken(testUser.id);
+  });
 
-test("resolved column ignores an invalid configured id and falls back safely", () => {
-  const fallbackColumn = getResolvedColumn(columns, "missing-column");
-  assert.equal(fallbackColumn?.id, "done");
+  test('POST /api/projects/:projectId/boards - should create new board', async () => {
+    const boardData = {
+      name: 'Test Board',
+      leftToRightOnly: false,
+      resolvedColumnId: null
+    };
+
+    const response = await request(app)
+      .post(`/api/projects/${testProject.id}/boards`)
+      .set('Cookie', [`token=${authToken}`])
+      .send(boardData)
+      .expect(201);
+
+    assert.strictEqual(response.body.message, 'Board created successfully');
+    assert.strictEqual(response.body.board.name, boardData.name);
+    assert.strictEqual(response.body.board.projectId, testProject.id);
+    assert.ok(response.body.board.columns);
+  });
+
+  test('GET /api/boards/:boardId - should get board with columns and tasks', async () => {
+    const board = await createTestBoard(testProject.id);
+
+    const response = await request(app)
+      .get(`/api/boards/${board.id}`)
+      .set('Cookie', [`token=${authToken}`])
+      .expect(200);
+
+    assert.strictEqual(response.body.id, board.id);
+    assert.strictEqual(response.body.name, board.name);
+    assert.ok(response.body.columns);
+    assert.ok(Array.isArray(response.body.columns));
+    assert.strictEqual(response.body.columns.length, 3); // Default columns
+  });
+
+  test('PUT /api/boards/:boardId - should update board', async () => {
+    const board = await createTestBoard(testProject.id);
+    const updateData = {
+      name: 'Updated Board Name',
+      leftToRightOnly: true
+    };
+
+    const response = await request(app)
+      .put(`/api/boards/${board.id}`)
+      .set('Cookie', [`token=${authToken}`])
+      .send(updateData)
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Board updated successfully');
+    assert.strictEqual(response.body.board.name, updateData.name);
+    assert.strictEqual(response.body.board.leftToRightOnly, updateData.leftToRightOnly);
+  });
+
+  test('DELETE /api/boards/:boardId - should delete board', async () => {
+    const board = await createTestBoard(testProject.id);
+
+    const response = await request(app)
+      .delete(`/api/boards/${board.id}`)
+      .set('Cookie', [`token=${authToken}`])
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Board deleted successfully');
+  });
+
+  test('POST /api/boards/:boardId/columns - should add column to board', async () => {
+    const board = await createTestBoard(testProject.id);
+    const columnData = {
+      name: 'New Column',
+      order: 3,
+      wipLimit: 5
+    };
+
+    const response = await request(app)
+      .post(`/api/boards/${board.id}/columns`)
+      .set('Cookie', [`token=${authToken}`])
+      .send(columnData)
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Column added successfully');
+    assert.strictEqual(response.body.column.name, columnData.name);
+    assert.strictEqual(response.body.column.order, columnData.order);
+    assert.strictEqual(response.body.column.wipLimit, columnData.wipLimit);
+  });
+
+  test('PUT /api/boards/:boardId/columns/:columnId - should update column', async () => {
+    const board = await createTestBoard(testProject.id);
+    const columns = await request(app)
+      .get(`/api/boards/${board.id}`)
+      .set('Cookie', [`token=${authToken}`]);
+    
+    const firstColumn = columns.body.columns[0];
+    const updateData = {
+      name: 'Updated Column',
+      wipLimit: 3
+    };
+
+    const response = await request(app)
+      .put(`/api/boards/${board.id}/columns/${firstColumn.id}`)
+      .set('Cookie', [`token=${authToken}`])
+      .send(updateData)
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Column updated successfully');
+    assert.strictEqual(response.body.column.name, updateData.name);
+    assert.strictEqual(response.body.column.wipLimit, updateData.wipLimit);
+  });
+
+  test('DELETE /api/boards/:boardId/columns/:columnId - should delete column', async () => {
+    const board = await createTestBoard(testProject.id);
+    const columns = await request(app)
+      .get(`/api/boards/${board.id}`)
+      .set('Cookie', [`token=${authToken}`]);
+    
+    const firstColumn = columns.body.columns[0];
+
+    const response = await request(app)
+      .delete(`/api/boards/${board.id}/columns/${firstColumn.id}`)
+      .set('Cookie', [`token=${authToken}`])
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Column deleted successfully');
+  });
 });

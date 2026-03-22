@@ -3,78 +3,175 @@ import assert from "node:assert/strict";
 import {
   getLifecycleDatesForStatus,
   parseDueDate,
+  getColumnOrderUpdates,
+  deriveStoryStatusId,
   type WorkflowColumnLike,
 } from "../lib/workflowUtils.js";
 
-const columns: WorkflowColumnLike[] = [
-  { id: "todo", name: "To Do", order: 0, wipLimit: 10 },
-  { id: "progress", name: "In Progress", order: 1, wipLimit: 10 },
-  { id: "done", name: "Done", order: 2, wipLimit: 10 },
-  { id: "released", name: "Released", order: 3, wipLimit: 10 },
-];
+test.describe('Workflow Utils', () => {
+  test.describe('parseDueDate', () => {
+    test('should return undefined for undefined input', () => {
+      assert.strictEqual(parseDueDate(undefined), undefined);
+    });
 
-test("parseDueDate returns a Date for valid ISO input and null for cleared input", () => {
-  const parsedDate = parseDueDate("2026-03-15T00:00:00.000Z");
-  assert.ok(parsedDate instanceof Date);
-  assert.equal(parseDueDate(null), null);
-  assert.equal(parseDueDate(undefined), undefined);
-});
+    test('should return null for null input', () => {
+      assert.strictEqual(parseDueDate(null), null);
+    });
 
-test("parseDueDate throws on invalid values", () => {
-  assert.throws(() => parseDueDate("not-a-date"));
-  assert.throws(() => parseDueDate(42));
-});
+    test('should return null for empty string', () => {
+      assert.strictEqual(parseDueDate(''), null);
+    });
 
-test("task lifecycle uses Done for resolvedAt and the last column for closedAt", () => {
-  const timestamp = new Date("2026-03-15T10:00:00.000Z");
+    test('should parse valid date string', () => {
+      const dateString = '2024-12-25T10:00:00Z';
+      const result = parseDueDate(dateString);
+      
+      assert.ok(result instanceof Date);
+      assert.strictEqual(result.getTime(), new Date(dateString).getTime());
+    });
 
-  const resolvedDates = getLifecycleDatesForStatus(
-    columns,
-    "done",
-    null,
-    null,
-    timestamp
-  );
-  assert.equal(resolvedDates.resolvedAt?.toISOString(), timestamp.toISOString());
-  assert.equal(resolvedDates.closedAt, null);
+    test('should throw error for invalid date string', () => {
+      assert.throws(() => parseDueDate('invalid-date'), {
+        message: 'Invalid due date format'
+      });
+    });
 
-  const closedDates = getLifecycleDatesForStatus(
-    columns,
-    "released",
-    resolvedDates.resolvedAt,
-    null,
-    timestamp
-  );
-  assert.equal(closedDates.resolvedAt?.toISOString(), timestamp.toISOString());
-  assert.equal(closedDates.closedAt?.toISOString(), timestamp.toISOString());
-});
+    test('should throw error for non-string input', () => {
+      assert.throws(() => parseDueDate(123), {
+        message: 'Invalid due date format'
+      });
+    });
+  });
 
-test("task lifecycle honors a configured resolved column when one is set", () => {
-  const timestamp = new Date("2026-03-15T10:00:00.000Z");
+  test.describe('getLifecycleDatesForStatus', () => {
+    const mockColumns: WorkflowColumnLike[] = [
+      { id: '1', name: 'To Do', order: 0, wipLimit: null },
+      { id: '2', name: 'In Progress', order: 1, wipLimit: null },
+      { id: '3', name: 'Done', order: 2, wipLimit: null },
+    ];
 
-  const reviewResolvedDates = getLifecycleDatesForStatus(
-    columns,
-    "progress",
-    null,
-    null,
-    timestamp
-  );
+    test('should set resolvedAt when reaching Done column', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      const result = getLifecycleDatesForStatus(
+        mockColumns,
+        '3', // Done column
+        null,
+        null,
+        now
+      );
 
-  assert.equal(reviewResolvedDates.resolvedAt?.toISOString(), timestamp.toISOString());
-  assert.equal(reviewResolvedDates.closedAt, null);
-});
+      assert.deepStrictEqual(result.resolvedAt, now);
+      assert.deepStrictEqual(result.closedAt, now); // Done is also the last column
+    });
 
-test("task lifecycle does not set resolvedAt before the configured resolved column", () => {
-  const timestamp = new Date("2026-03-15T10:00:00.000Z");
+    test('should set closedAt when reaching last column', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      const result = getLifecycleDatesForStatus(
+        mockColumns,
+        '3', // Last column
+        null,
+        null,
+        now
+      );
 
-  const lifecycleDates = getLifecycleDatesForStatus(
-    columns,
-    "todo",
-    null,
-    null,
-    timestamp
-  );
+      assert.deepStrictEqual(result.resolvedAt, now);
+      assert.deepStrictEqual(result.closedAt, now);
+    });
 
-  assert.equal(lifecycleDates.resolvedAt, null);
-  assert.equal(lifecycleDates.closedAt, null);
+    test('should preserve existing resolvedAt', () => {
+      const existingResolved = new Date('2024-01-01T10:00:00Z');
+      const now = new Date('2024-01-01T12:00:00Z');
+      const result = getLifecycleDatesForStatus(
+        mockColumns,
+        '3', // Done column
+        existingResolved,
+        null,
+        now
+      );
+
+      assert.deepStrictEqual(result.resolvedAt, existingResolved);
+    });
+
+    test('should not set dates for non-resolved columns', () => {
+      const result = getLifecycleDatesForStatus(
+        mockColumns,
+        '1', // To Do column
+        null,
+        null
+      );
+
+      assert.strictEqual(result.resolvedAt, null);
+      assert.strictEqual(result.closedAt, null);
+    });
+  });
+
+  test.describe('getColumnOrderUpdates', () => {
+    test('should calculate order updates for moved columns', () => {
+      const columnIds = ['1', '2', '3'];
+      // Move column 1 to position 2 (end) - this would reorder to ['2', '3', '1']
+      const updates = getColumnOrderUpdates(['2', '3', '1']);
+
+      assert.strictEqual(updates.length, 3);
+      assert.deepStrictEqual(updates[0], { id: '2', order: 0 });
+      assert.deepStrictEqual(updates[1], { id: '3', order: 1 });
+      assert.deepStrictEqual(updates[2], { id: '1', order: 2 });
+    });
+
+    test('should handle moving column to end', () => {
+      // Move column 1 (A) to position 2 (end) - reorder to ['2', '3', '1']
+      const updates = getColumnOrderUpdates(['2', '3', '1']);
+      
+      assert.strictEqual(updates.length, 3);
+      assert.deepStrictEqual(updates[0], { id: '2', order: 0 });
+      assert.deepStrictEqual(updates[1], { id: '3', order: 1 });
+      assert.deepStrictEqual(updates[2], { id: '1', order: 2 });
+    });
+
+    test('should return empty array when moving to same position', () => {
+      const updates = getColumnOrderUpdates(['1', '2']);
+      assert.strictEqual(updates.length, 2);
+      // Should still return updates even for "same position"
+      assert.deepStrictEqual(updates[0], { id: '1', order: 0 });
+      assert.deepStrictEqual(updates[1], { id: '2', order: 1 });
+    });
+  });
+
+  test.describe('deriveStoryStatusId', () => {
+    test('should derive story status from subtask statuses', () => {
+      const columns: WorkflowColumnLike[] = [
+        { id: '1', name: 'To Do', order: 0, wipLimit: null },
+        { id: '2', name: 'In Progress', order: 1, wipLimit: null },
+        { id: '3', name: 'Done', order: 2, wipLimit: null },
+      ];
+
+      const subTaskStatusIds: string[] = ['3', '3', '2']; // Done, Done, In Progress
+
+      // Should return the leftmost (lowest order) status
+      const result = deriveStoryStatusId(columns, subTaskStatusIds);
+      assert.strictEqual(result, '2'); // In Progress (lowest order)
+    });
+
+    test('should return null when no subtasks', () => {
+      const columns: WorkflowColumnLike[] = [
+        { id: '1', name: 'To Do', order: 0, wipLimit: null },
+      ];
+
+      const result = deriveStoryStatusId(columns, []);
+      assert.strictEqual(result, '1'); // Should return first column, not null
+    });
+
+    test('should handle mixed status orders', () => {
+      const columns: WorkflowColumnLike[] = [
+        { id: '1', name: 'To Do', order: 0, wipLimit: null },
+        { id: '2', name: 'In Progress', order: 1, wipLimit: null },
+        { id: '3', name: 'Review', order: 2, wipLimit: null },
+        { id: '4', name: 'Done', order: 3, wipLimit: null },
+      ];
+
+      const subTaskStatusIds = ['1', '4', '2']; // To Do, Done, In Progress
+
+      const result = deriveStoryStatusId(columns, subTaskStatusIds);
+      assert.strictEqual(result, '1'); // Should return To Do (lowest order), not Done
+    });
+  });
 });

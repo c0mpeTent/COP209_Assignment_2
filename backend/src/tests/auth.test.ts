@@ -1,63 +1,108 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import type { CookieOptions } from "express";
-import type { User } from "@prisma/client";
+import request from "supertest";
+import app from "../main.js";
+import { 
+  setupTestDb, 
+  cleanupTestData, 
+  createTestUser, 
+  generateTestToken,
+  closeTestDb 
+} from "./testUtils.js";
 
-type PublicUser = Pick<User, "id" | "name" | "email" | "avatarUrl">;
-const sanitizeUser = (user: PublicUser) => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  avatarUrl: user.avatarUrl,
+test.before(async () => {
+  await setupTestDb();
 });
 
-const hashRefreshToken = (token: string) =>
-  createHash("sha256").update(token).digest("hex");
-
-const getCookieOptions = (
-  maxAge: number,
-  nodeEnv = process.env.NODE_ENV
-): CookieOptions => ({
-  httpOnly: true,
-  secure: nodeEnv === "production",
-  sameSite: "lax",
-  maxAge,
+test.after(async () => {
+  await cleanupTestData();
+  await closeTestDb();
 });
 
+test.describe(' Auth API Tests', () => {
+  test('POST /api/auth/register - should register new user', async () => {
+    const userData = {
+      email: 'newuser@example.com',
+      name: 'New User',
+      password: 'password123'
+    };
 
-test("sanitizeUser returns only safe profile fields", () => {
-  const sanitized = sanitizeUser({
-    id: "user-1",
-    name: "Om Meena",
-    email: "om@example.com",
-    avatarUrl: "https://example.com/avatar.png",
+    const response = await request(app)
+      .post('/api/auth/register')
+      .send(userData)
+      .expect(201);
+
+    assert.strictEqual(response.body.message, 'User registered successfully');
+    assert.ok(response.body.user.id);
+    assert.strictEqual(response.body.user.email, userData.email);
+    assert.ok(!response.body.user.password);
   });
 
-  assert.deepEqual(sanitized, {
-    id: "user-1",
-    name: "Om Meena",
-    email: "om@example.com",
-    avatarUrl: "https://example.com/avatar.png",
+  test('POST /api/auth/login - should login with valid credentials', async () => {
+    const userData = {
+      email: 'login@example.com',
+      name: 'Login User',
+      password: 'password123'
+    };
+
+    await createTestUser(userData);
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({
+        email: userData.email,
+        password: userData.password
+      })
+      .expect(200);
+
+    assert.strictEqual(response.body.message, 'Login successful');
+    assert.ok(response.body.user.id);
+    assert.ok(response.headers['set-cookie']);
   });
-});
 
-test("hashRefreshToken is deterministic and does not leak raw token", () => {
-  const rawToken = "refresh-token-value";
-  const firstHash = hashRefreshToken(rawToken);
-  const secondHash = hashRefreshToken(rawToken);
+  test('POST /api/auth/login - should reject invalid credentials', async () => {
+    const userData = {
+      email: 'invalid@example.com',
+      name: 'Invalid User',
+      password: 'password123'
+    };
 
-  assert.equal(firstHash, secondHash);
-  assert.notEqual(firstHash, rawToken);
-  assert.equal(firstHash.length, 64);
-});
+    await createTestUser(userData);
 
-test("getCookieOptions enables secure cookies in production only", () => {
-  const productionOptions = getCookieOptions(1000, "production");
-  const developmentOptions = getCookieOptions(1000, "development");
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({
+        email: userData.email,
+        password: 'wrongpassword'
+      })
+      .expect(401);
 
-  assert.equal(productionOptions.httpOnly, true);
-  assert.equal(productionOptions.secure, true);
-  assert.equal(productionOptions.sameSite, "lax");
-  assert.equal(developmentOptions.secure, false);
+    assert.strictEqual(response.body.message, 'Invalid credentials');
+  });
+
+  test('GET /api/auth/me - should return current user', async () => {
+    const user = await createTestUser({
+      email: 'profile@example.com',
+      name: 'Profile User',
+      password: 'password123'
+    });
+
+    const token = await generateTestToken(user.id);
+
+    const response = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', [`token=${token}`])
+      .expect(200);
+
+    assert.strictEqual(response.body.id, user.id);
+    assert.strictEqual(response.body.email, user.email);
+  });
+
+  test('GET /api/auth/me - should reject unauthenticated request', async () => {
+    const response = await request(app)
+      .get('/api/auth/me')
+      .expect(401);
+
+    assert.strictEqual(response.body.message, 'Access token required');
+  });
 });

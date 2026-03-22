@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "NODE_ENV=test node --loader ts-node/esm --test src/tests/*.test.ts",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'node --loader ts-node/esm' src/main.ts",
     "build": "tsc"
   },
@@ -32,8 +32,10 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.4.0",
+    "@types/supertest": "^7.2.0",
     "nodemon": "^3.1.14",
     "prisma": "^5.22.0",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
